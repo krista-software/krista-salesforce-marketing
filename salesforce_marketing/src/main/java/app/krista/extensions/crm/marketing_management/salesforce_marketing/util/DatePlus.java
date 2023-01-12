@@ -32,4 +32,7 @@ public final class DatePlus {
             return null;
         }
     }
+
+    private DatePlus() {}
+
 }
