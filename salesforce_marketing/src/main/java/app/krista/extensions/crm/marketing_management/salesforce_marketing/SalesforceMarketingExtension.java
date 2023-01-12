@@ -73,4 +73,9 @@ public final class SalesforceMarketingExtension {
             providerFactory.create(salesforceMarketingAttributes).getSalesforceTokenForAdmin();
         }
     }
+
+    @InvokerRequest(InvokerRequest.Type.INVOKER_UPDATED)
+    public void attributesUpdated(Map<String, Object> oldAttributes, Map<String, Object> newAttributes) {
+        salesforceMarketingAttributes.update(newAttributes);
+    }
 }
