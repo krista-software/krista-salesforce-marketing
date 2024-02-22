@@ -135,7 +135,7 @@ public final class SalesforceTokenProvider {
             NamedValuedField contextIdField = new NamedValuedField(Constants.AUTH_CONTEXT_ID, Constants.TEXT, authContextId, new HashMap<>(), new HashMap<>());
             details.add(contextIdField);
         }
-        return new MustAuthorizeException(reAuthentication ? Constants.REFRESH_TOKEN_IS_NO_LONGER_VALID + Constants.PLEASE_REAUTHORIZE_YOURSELF : Constants.YOU_ARE_NOT_AUTHORIZED + Constants.PLEASE_AUTHORIZE_YOURSELF, details);
+        return new MustAuthorizeException(reAuthentication ? Constants.REFRESH_TOKEN_IS_NO_LONGER_VALID + Constants.PLEASE_REAUTHORIZE_YOURSELF : Constants.AUTHORIZATION_PROMPT, details);
     }
 
 }
