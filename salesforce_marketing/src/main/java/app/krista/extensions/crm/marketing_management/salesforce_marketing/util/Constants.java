@@ -27,8 +27,6 @@ public final class Constants {
     public static final String ENTITY_INPUT_IS_NULL_OR_EMPTY = "Entity input is null or empty.";
     public static final String REFRESH_TOKEN_IS_NO_LONGER_VALID = "Refresh token is no longer valid. ";
     public static final String PLEASE_REAUTHORIZE_YOURSELF = "Please reauthorize yourself";
-    public static final String YOU_ARE_NOT_AUTHORIZED = "You are not authorized. ";
-    public static final String PLEASE_AUTHORIZE_YOURSELF = "Please authorize yourself.";
     public static final String USER_ID = "userId";
     public static final String AUTH_CONTEXT_ID = "authContextId";
     public static final String TEXT = "Text";
@@ -48,6 +46,7 @@ public final class Constants {
     public static final String SERVICES_DATA_V_55_0_QUERY_Q = "/services/data/v55.0/query?q=";
     public static final String FAILED_TO_CREATE_RECORD = "Failed to create record ";
     public static final String FAILED_TO_GET_RECORD = "Failed to get record ";
+    public static final String AUTHORIZATION_PROMPT = "Authorize yourself and click 'Validate Attributes' before saving changes to proceed further";
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
