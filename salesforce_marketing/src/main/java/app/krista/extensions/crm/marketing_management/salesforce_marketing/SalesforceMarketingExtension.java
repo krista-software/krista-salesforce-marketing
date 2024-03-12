@@ -18,7 +18,7 @@ import java.util.Map;
 @Field.Text(value = SalesforceMarketingAttributes.USER_NAME, required = false)
 @Field.Text(value = SalesforceMarketingAttributes.PASSWORD, isSecured = true, required = false)
 @Field.Text(value = SalesforceMarketingAttributes.SECURITY_TOKEN, isSecured = true, required = false)
-@Extension(version = "2.0.3-rc2")
+@Extension(version = "2.0.3")
 @StaticResource(path = "docs", file = "documentation")
 public final class SalesforceMarketingExtension {
 
