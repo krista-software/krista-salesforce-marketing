@@ -2,7 +2,7 @@
 
 # Release Notes - Salesforce Marketing Module Extension
 
-## Version 2.0.2
+## Version 2.0.3
 
 - **Developer Name** : Vara Prasad Kolli
 - **Krista Service APIs Java** : 1.0.94
