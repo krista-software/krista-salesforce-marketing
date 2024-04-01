@@ -2,15 +2,16 @@
 
 # Release Notes - Salesforce Marketing Module Extension
 
-## Version 2.0.3
+## Version 2.0.4
 
-- **Developer Name** : Vara Prasad Kolli
+- **Developer Name** : Srushti Ekmode
 - **Krista Service APIs Java** : 1.0.94
-- **Global Catalog Version** : 1.0.42
-
+- **Global Catalog Version** : 1.0.44
+- **Appliance Release Version** : 3.2.8
+- 
 ## Resolved Bugs
 
-* [KC-1871](https://antbrains.atlassian.net/browse/KC-1871) SalesForce Marketing Extension Bettor error message to user in configure extension Screen.
+* [KC-1897](https://antbrains.atlassian.net/browse/KC-1897) Salesforce Marketing | retrieve custom fields from the Objects.
 
 ## Known Issues
 
