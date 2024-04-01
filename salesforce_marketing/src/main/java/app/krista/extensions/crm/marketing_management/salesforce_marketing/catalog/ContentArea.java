@@ -39,6 +39,10 @@ public class ContentArea {
             @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields) {
         StringBuilder stringBuilder = new StringBuilder();
         for (String str : customFields) {
+            if (!str.endsWith("__c")) {
+                System.out.println(str + " is not custom field");
+                return new FreeForm();
+            }
             stringBuilder.append(str).append(",");
         }
         if (!customFields.isEmpty()) {
