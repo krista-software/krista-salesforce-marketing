@@ -4,7 +4,26 @@
 
 ## Catalog Requests
 
-Krista Salesforce Marketing Module Extension does not support any Catalog Requests.
+### Content Area
+
+#### Retrieve Custom Fields For Given Object
+
+- **Description**: Retrieve Custom Fields For Given Object
+- **Input Parameters**:
+
+| **Parameter Name** | **Parameter Type** | **Mandatory** | **Example**    |
+|--------------------|--------------------|---------------|----------------|
+| Object Id          | Text               | Yes           | 123456         |
+| Object Type        | Pick List          | Yes           | Campaign       |
+| Custom Fields      | List<String>       | Yes           | Competition__c |
+
+- **Output Parameters**:
+
+| **Parameter Name** | **Parameter Type** |
+|--------------------|--------------------|
+| Field Details      | FreeForm           |
+
+
 
 ## Entity Requests
 
