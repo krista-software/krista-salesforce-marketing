@@ -15,7 +15,7 @@
 |--------------------|--------------------|---------------|----------------|
 | Object Id          | Text               | Yes           | 123456         |
 | Object Type        | Pick List          | Yes           | Campaign       |
-| Custom Fields      | List<String>       | Yes           | Competition__c |
+| Custom Fields      | List<Text>         | Yes           | Competition__c |
 
 - **Output Parameters**:
 
