@@ -9,6 +9,8 @@ import app.krista.model.base.FreeForm;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.List;
         ecosystemVersion = "717f1f7e-c727-4fa5-9df7-0993b48f04de")
 public class ContentArea {
     private final SalesforceManager salesforceManager;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentArea.class);
 
     @Inject
     public ContentArea(SalesforceManager salesforceManager) {
@@ -40,7 +43,7 @@ public class ContentArea {
         StringBuilder stringBuilder = new StringBuilder();
         for (String str : customFields) {
             if (!str.endsWith("__c")) {
-                System.out.println(str + " is not custom field");
+                LOGGER.info(str + " is not custom field");
                 return new FreeForm();
             }
             stringBuilder.append(str).append(",");
@@ -77,7 +80,7 @@ public class ContentArea {
             }
 
         } catch (JSONException exception) {
-            System.out.println("Exception:" + exception.getMessage());
+            LOGGER.error("Exception occurred due to :" + exception.getMessage(), exception);
         }
         return resultMap;
     }

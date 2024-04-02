@@ -9,6 +9,8 @@ import app.krista.extensions.crm.marketing_management.salesforce_marketing.util.
 import app.krista.ksdk.authentication.AuthorizationListener;
 import app.krista.ksdk.context.AuthorizationContext;
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -28,6 +30,7 @@ public final class AuthenticationResource {
     private final SalesforceTokenProviderFactory providerFactory;
     private final AuthorizationContext authorizationContext;
     private final AuthorizationListener authorizationListener;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResource.class);
 
     @Inject
     public AuthenticationResource(RefreshTokenStore refreshTokenStore, SalesforceMarketingAttributesStore attributesStore, SalesforceTokenProviderFactory providerFactory, AuthorizationContext authorizationContext, AuthorizationListener authorizationListener) {
@@ -78,9 +81,11 @@ public final class AuthenticationResource {
             }
             return "User authenticated successfully. Save the changes.";
         } catch (IOException | ExecutionException cause) {
+            LOGGER.error("Exception occurred due to :" + cause.getMessage(), cause);
             throw new IllegalStateException(Constants.ERROR_OCCURRED_DURING_AUTHORIZATION, cause.getCause());
         } catch (InterruptedException interruptedException) {
             Thread.currentThread().interrupt();
+            LOGGER.error("Exception occurred due to :" + interruptedException.getMessage(), interruptedException);
             throw new IllegalStateException(interruptedException.getMessage());
         } finally {
             if (authContextId != null) {
