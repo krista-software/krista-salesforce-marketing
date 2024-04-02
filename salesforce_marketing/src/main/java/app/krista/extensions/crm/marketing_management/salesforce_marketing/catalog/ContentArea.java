@@ -80,21 +80,7 @@ public class ContentArea {
                 if (records.length() > 0) {
                     JSONObject record = records.getJSONObject(0);
 
-                    if (record != null) {
-                        for (String key : customFields) {
-                            if (record.has(key)) {
-                                Object value = record.get(key);
-
-                                if (value.equals(null)) {
-                                    resultMap.put(key, "Text", "");
-                                } else {
-                                    resultMap.put(key, "Text", value.toString());
-                                }
-                            }
-                        }
-                    } else {
-                        LOGGER.info("First record is null.");
-                    }
+                    processRecordFields(customFields, resultMap, record);
                 } else {
                     LOGGER.info("No records found in the JSON response.");
                 }
@@ -103,6 +89,24 @@ public class ContentArea {
             }
         } else {
             LOGGER.info("JSON response is null.");
+        }
+    }
+
+    private static void processRecordFields(List<String> customFields, FreeForm resultMap, JSONObject record) {
+        if (record != null) {
+            for (String key : customFields) {
+                if (record.has(key)) {
+                    Object value = record.get(key);
+
+                    if (value.equals(null)) {
+                        resultMap.put(key, "Text", "");
+                    } else {
+                        resultMap.put(key, "Text", value.toString());
+                    }
+                }
+            }
+        } else {
+            LOGGER.info("First record is null.");
         }
     }
 
