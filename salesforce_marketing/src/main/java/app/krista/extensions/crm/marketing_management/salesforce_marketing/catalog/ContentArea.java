@@ -43,7 +43,7 @@ public class ContentArea {
         StringBuilder stringBuilderForCustomFields = new StringBuilder();
         for (String str : customFields) {
             if (!str.endsWith("__c")) { // custom fields ends with __c
-                LOGGER.info(str + " is not custom field");
+                LOGGER.info("{} is not a custom field", str);
                 return new FreeForm();
             }
             stringBuilderForCustomFields.append(str).append(",");
@@ -60,46 +60,50 @@ public class ContentArea {
         return new FreeForm();
     }
 
-    public static FreeForm parseJSONToMap(String jsonResponse, List<String> customFields) {
+    private static FreeForm parseJSONToMap(String jsonResponse, List<String> customFields) {
         FreeForm resultMap = new FreeForm();
         try {
-            if (jsonResponse != null) {
-                JSONObject jsonObject = new JSONObject(jsonResponse);
-
-                if (jsonObject.has("records")) {
-                    JSONArray records = jsonObject.getJSONArray("records");
-
-                    if (records.length() > 0) {
-                        JSONObject record = records.getJSONObject(0);
-
-                        if (record != null) {
-                            for (String key : customFields) {
-                                if (record.has(key)) {
-                                    Object value = record.get(key);
-
-                                    if (value.equals(null)) {
-                                        resultMap.put(key, "Text", "");
-                                    } else {
-                                        resultMap.put(key, "Text", value.toString());
-                                    }
-                                }
-                            }
-                        } else {
-                            LOGGER.info("First record is null.");
-                        }
-                    } else {
-                        LOGGER.info("No records found in the JSON response.");
-                    }
-                } else {
-                    LOGGER.info("No 'records' array found in the JSON response.");
-                }
-            } else {
-                LOGGER.info("JSON response is null.");
-            }
+            processJSONResponse(jsonResponse, customFields, resultMap);
         } catch (JSONException exception) {
             LOGGER.info("Exception occurred due to :" + exception.getMessage(), exception);
         }
         return resultMap;
+    }
+
+    private static void processJSONResponse(String jsonResponse, List<String> customFields, FreeForm resultMap) {
+        if (jsonResponse != null) {
+            JSONObject jsonObject = new JSONObject(jsonResponse);
+
+            if (jsonObject.has("records")) {
+                JSONArray records = jsonObject.getJSONArray("records");
+
+                if (records.length() > 0) {
+                    JSONObject record = records.getJSONObject(0);
+
+                    if (record != null) {
+                        for (String key : customFields) {
+                            if (record.has(key)) {
+                                Object value = record.get(key);
+
+                                if (value.equals(null)) {
+                                    resultMap.put(key, "Text", "");
+                                } else {
+                                    resultMap.put(key, "Text", value.toString());
+                                }
+                            }
+                        }
+                    } else {
+                        LOGGER.info("First record is null.");
+                    }
+                } else {
+                    LOGGER.info("No records found in the JSON response.");
+                }
+            } else {
+                LOGGER.info("No 'records' array found in the JSON response.");
+            }
+        } else {
+            LOGGER.info("JSON response is null.");
+        }
     }
 
 }
