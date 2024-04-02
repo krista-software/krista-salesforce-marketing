@@ -187,7 +187,7 @@ public final class SalesforceManager {
             JSONObject jsonObject = jsonArray.getJSONObject(0);
             return jsonObject.getString("message");
         } catch (JSONException exception) {
-            LOGGER.error("Exception occurred due to :" + exception.getMessage(), exception);
+            LOGGER.error("Exception occurred due to : {} {}", exception.getMessage(), exception);
             return null;
         }
     }
