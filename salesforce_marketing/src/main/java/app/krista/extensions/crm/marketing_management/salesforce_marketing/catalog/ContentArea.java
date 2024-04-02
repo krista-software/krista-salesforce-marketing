@@ -40,18 +40,18 @@ public class ContentArea {
             @Field.Text(name = "Object Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectId,
             @Field.PickOne(name = "Object Type", values = {"Campaign"}, required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectType,
             @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields) {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilderForCustomFields = new StringBuilder();
         for (String str : customFields) {
-            if (!str.endsWith("__c")) {
+            if (!str.endsWith("__c")) { // custom fields ends with __c
                 LOGGER.info(str + " is not custom field");
                 return new FreeForm();
             }
-            stringBuilder.append(str).append(",");
+            stringBuilderForCustomFields.append(str).append(",");
         }
         if (!customFields.isEmpty()) {
-            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+            stringBuilderForCustomFields.deleteCharAt(stringBuilderForCustomFields.length() - 1);
         }
-        String queryFields = stringBuilder.toString();
+        String queryFields = stringBuilderForCustomFields.toString();
         String query = "Select " + queryFields + " from " + objectType + " where id = '" + objectId + "'";
         String recordByQuery = salesforceManager.getRecordByQuery(query);
         if (recordByQuery != null) {
