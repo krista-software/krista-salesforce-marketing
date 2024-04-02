@@ -63,24 +63,41 @@ public class ContentArea {
     public static FreeForm parseJSONToMap(String jsonResponse, List<String> customFields) {
         FreeForm resultMap = new FreeForm();
         try {
-            JSONObject jsonObject = new JSONObject(jsonResponse);
-            JSONArray records = jsonObject.getJSONArray("records");
-            JSONObject record = records.getJSONObject(0);
+            if (jsonResponse != null) {
+                JSONObject jsonObject = new JSONObject(jsonResponse);
 
-            for (String key : customFields) {
-                if (record.has(key)) {
-                    Object value = record.get(key);
-                    if (value.equals(null)) {
-                        resultMap.put(key, "Text", "");
+                if (jsonObject.has("records")) {
+                    JSONArray records = jsonObject.getJSONArray("records");
+
+                    if (records.length() > 0) {
+                        JSONObject record = records.getJSONObject(0);
+
+                        if (record != null) {
+                            for (String key : customFields) {
+                                if (record.has(key)) {
+                                    Object value = record.get(key);
+
+                                    if (value.equals(null)) {
+                                        resultMap.put(key, "Text", "");
+                                    } else {
+                                        resultMap.put(key, "Text", value.toString());
+                                    }
+                                }
+                            }
+                        } else {
+                            LOGGER.info("First record is null.");
+                        }
                     } else {
-                        resultMap.put(key, "Text", value);
+                        LOGGER.info("No records found in the JSON response.");
                     }
-
+                } else {
+                    LOGGER.info("No 'records' array found in the JSON response.");
                 }
+            } else {
+                LOGGER.info("JSON response is null.");
             }
-
         } catch (JSONException exception) {
-            LOGGER.error("Exception occurred due to :" + exception.getMessage(), exception);
+            LOGGER.info("Exception occurred due to :" + exception.getMessage(), exception);
         }
         return resultMap;
     }
