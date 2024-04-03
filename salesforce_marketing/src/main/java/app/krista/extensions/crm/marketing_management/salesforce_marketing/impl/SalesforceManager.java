@@ -181,13 +181,51 @@ public final class SalesforceManager {
         return request;
     }
 
+    //    private String getErrorMessage(String exceptionMessage) {
+//        try {
+//            JSONArray jsonArray = new JSONArray(exceptionMessage);
+//            JSONObject jsonObject = jsonArray.getJSONObject(0);
+//            return jsonObject.getString("message");
+//        } catch (JSONException exception) {
+//            LOGGER.error("Exception occurred due to : {} {}", exception.getMessage(), exception);
+//            return null;
+//        }
+//    }
     private String getErrorMessage(String exceptionMessage) {
+        if (exceptionMessage == null || exceptionMessage.isEmpty()) {
+            LOGGER.error("Exception message is null or empty");
+            return null;
+        }
+
         try {
             JSONArray jsonArray = new JSONArray(exceptionMessage);
+
+            if (jsonArray.length() == 0) {
+                LOGGER.error("JSON array is empty");
+                return null;
+            }
+
             JSONObject jsonObject = jsonArray.getJSONObject(0);
-            return jsonObject.getString("message");
+
+            if (jsonObject == null) {
+                LOGGER.error("First JSON object is null");
+                return null;
+            }
+            if (!jsonObject.has("message")) {
+                LOGGER.error("JSON object does not have message");
+                return null;
+            }
+
+            String message = jsonObject.getString("message");
+
+            if (message == null || message.isEmpty()) {
+                LOGGER.error("Message in JSON object is null or empty");
+                return null;
+            }
+
+            return message;
         } catch (JSONException exception) {
-            LOGGER.error("Exception occurred due to : {} {}", exception.getMessage(), exception);
+            LOGGER.error("Exception occurred due to : {}", exception.getMessage(), exception);
             return null;
         }
     }
