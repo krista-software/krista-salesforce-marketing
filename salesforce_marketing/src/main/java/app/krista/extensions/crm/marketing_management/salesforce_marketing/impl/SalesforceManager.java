@@ -181,16 +181,6 @@ public final class SalesforceManager {
         return request;
     }
 
-    //    private String getErrorMessage(String exceptionMessage) {
-//        try {
-//            JSONArray jsonArray = new JSONArray(exceptionMessage);
-//            JSONObject jsonObject = jsonArray.getJSONObject(0);
-//            return jsonObject.getString("message");
-//        } catch (JSONException exception) {
-//            LOGGER.error("Exception occurred due to : {} {}", exception.getMessage(), exception);
-//            return null;
-//        }
-//    }
     private String getErrorMessage(String exceptionMessage) {
         if (exceptionMessage == null || exceptionMessage.isEmpty()) {
             LOGGER.error("Exception message is null or empty");
