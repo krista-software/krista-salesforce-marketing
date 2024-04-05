@@ -7,7 +7,12 @@ import app.krista.extensions.crm.marketing_management.salesforce_marketing.util.
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuthRequest;
 import com.github.scribejava.core.model.Verb;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -24,6 +29,8 @@ public final class SalesforceManager {
 
     private final SalesforceMarketingAttributes salesforceMarketingAttributes;
     private final SalesforceTokenProvider tokenProvider;
+    private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceManager.class);
+
 
     @Inject
     public SalesforceManager(SalesforceTokenProviderFactory providerFactory, SalesforceMarketingAttributes salesforceMarketingAttributes) {
@@ -133,7 +140,6 @@ public final class SalesforceManager {
         }
     }
 
-
     /**
      * This function will get the response of the salesforce api call
      *
@@ -145,7 +151,7 @@ public final class SalesforceManager {
         salesforceMarketingAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = salesforceMarketingAttributes.getOauthService().execute(request)) {
             if (response.getCode() >= 400) {
-                throw new IllegalArgumentException("Bad Request, Please enter correct required data. The error is " + response.getBody());
+                throw new IllegalArgumentException("Bad Request, Please enter correct required data. The error is " + getErrorMessage(response.getBody()));
             }
             return response.getBody();
         } catch (IOException | ExecutionException cause) {
@@ -174,4 +180,44 @@ public final class SalesforceManager {
         request.addHeader("Authorization", "Bearer " + salesforceToken.getAccessToken());
         return request;
     }
+
+    private String getErrorMessage(String exceptionMessage) {
+        if (exceptionMessage == null || exceptionMessage.isEmpty()) {
+            LOGGER.error("Exception message is null or empty");
+            return null;
+        }
+
+        try {
+            JSONArray jsonArray = new JSONArray(exceptionMessage);
+
+            if (jsonArray.length() == 0) {
+                LOGGER.error("JSON array is empty");
+                return null;
+            }
+
+            JSONObject jsonObject = jsonArray.getJSONObject(0);
+
+            if (jsonObject == null) {
+                LOGGER.error("First JSON object is null");
+                return null;
+            }
+            if (!jsonObject.has("message")) {
+                LOGGER.error("JSON object does not have message");
+                return null;
+            }
+
+            String message = jsonObject.getString("message");
+
+            if (message == null || message.isEmpty()) {
+                LOGGER.error("Message in JSON object is null or empty");
+                return null;
+            }
+
+            return message;
+        } catch (JSONException exception) {
+            LOGGER.error("Exception occurred due to : {}", exception.getMessage(), exception);
+            return null;
+        }
+    }
+
 }
