@@ -8,8 +8,8 @@ The Krista Salesforce Marketing Module Extension connects to Salesforce system a
 * ### Overview
   * [Overview](pages/overview.md)
 
-* ### Obtaining User and OAuth2.0 Credentials
-  * [Obtaining User and OAuth2.0 Credentials](pages/obtainingUserAndOAuth2.0Credentials.md)
+* ### Obtaining Auth Credentials
+  * [Obtaining User and OAuth2.0 Credentials](pages/obtainAuthCredentials.md)
 
 * ### Connecting Krista Salesforce Marketing Module Extension
   * [Connecting Krista Salesforce Marketing Module Extension](pages/connectionWithSalesforceMarketing.md)

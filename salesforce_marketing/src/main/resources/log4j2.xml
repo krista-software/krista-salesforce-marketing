@@ -7,10 +7,10 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Root level="trace">
+        <Root level="info">
             <AppenderRef ref="console"/>
         </Root>
-        <Logger name="com.kristasoft.extensions" additivity="false" level="debug">
+        <Logger name="app.krista.extensions" additivity="false" level="error">
             <AppenderRef ref="console" />
         </Logger>
     </Loggers>

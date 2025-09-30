@@ -9,6 +9,7 @@ import app.krista.extensions.util.KeyValueStore;
 import org.jvnet.hk2.annotations.Service;
 
 import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,9 +33,19 @@ public final class SalesforceMarketingAttributesStore {
      */
     public String save(SalesforceMarketingAttributes salesforceMarketingAttributes) {
         String authContextId = UUID.randomUUID().toString();
-        store.put(authContextId, Constants.GSON.toJson(Map.of(SalesforceMarketingAttributes.CLIENT_ID, salesforceMarketingAttributes.getClientId(),
-                SalesforceMarketingAttributes.CLIENT_SECRET, salesforceMarketingAttributes.getClientSecret())));
+        store.put(authContextId, getAttributesJson(salesforceMarketingAttributes));
         return authContextId;
+    }
+
+    private static String getAttributesJson(SalesforceMarketingAttributes salesforceMarketingAttributes) {
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put(salesforceMarketingAttributes.CLIENT_ID,
+                salesforceMarketingAttributes.getClientId());
+        attributes.put(salesforceMarketingAttributes.CLIENT_SECRET, salesforceMarketingAttributes.getClientSecret());
+        if (salesforceMarketingAttributes.getInstanceUrl() != null) {
+            attributes.put(salesforceMarketingAttributes.INSTANCE_URL, salesforceMarketingAttributes.getInstanceUrl());
+        }
+        return Constants.GSON.toJson(attributes);
     }
 
     /**
@@ -47,6 +58,7 @@ public final class SalesforceMarketingAttributesStore {
         var attributes = Constants.GSON.fromJson(store.get(authContextId).toString(), Map.class);
         return new SalesforceMarketingAttributes((String) attributes.get(SalesforceMarketingAttributes.CLIENT_ID),
                 (String) attributes.get(SalesforceMarketingAttributes.CLIENT_SECRET),
+                (String) attributes.get(SalesforceMarketingAttributes.INSTANCE_URL),
                 (String) attributes.get(SalesforceMarketingAttributes.USER_NAME),
                 (String) attributes.get(SalesforceMarketingAttributes.PASSWORD),
                 (String) attributes.get(SalesforceMarketingAttributes.SECURITY_TOKEN),

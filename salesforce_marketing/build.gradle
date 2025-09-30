@@ -1,57 +1,65 @@
 apply plugin: 'java-library'
-apply plugin: 'maven-publish'
 jar.archiveBaseName = "salesforce_marketing-extension"
 group 'app.krista.extensions.crm.marketing_management'
 
-version(System.getenv('BRANCH') == null ? "local" : System.getenv('BRANCH').replace("/", "_").replace("sfm-", ""))
+/*
+ * Use extension.name for archiveBaseName, extension.version for version.
+ * Resulting jar: <extension.name>-<extension.version>.jar e.g. Salesforce Marketing-2.0.5.jar
+ */
+def computedBaseName = "SalesforceMarketing"
+def computedVersion = "local"
 
 compileJava.dependsOn clean
 
+tasks.register("setReleaseProperties") {
+    dependsOn("generateReleaseProperties")
+    doFirst {
+        def releasePropsFile = file("release.properties")
+        if (releasePropsFile.exists()) {
+            def props = new Properties()
+            releasePropsFile.withInputStream { stream -> props.load(stream) }
+            computedBaseName = (props['extension.name'] ?: computedBaseName).replaceAll(/\s+/, "")
+            computedVersion = props['extension.version'] ?: computedVersion
+
+            System.setProperty("extensionVersion", computedVersion)
+            project.ext.set("finalBaseName", computedBaseName)
+            project.version = computedVersion
+
+            println "✔ Loaded extension name = ${computedBaseName}, version = ${computedVersion}"
+        } else {
+            logger.warn("⚠ release.properties not found; using default values.")
+            project.ext.set("finalBaseName", computedBaseName)
+            project.version = computedVersion
+        }
+    }
+}
+
+if (rootProject.file('builder.txt').canRead()) {
+    ext.buildnr = rootProject.file('builder.txt').text.trim()
+} else {
+    ext.buildnr = "0"
+}
+tasks.register('updateVersion') {
+    doFirst {
+        project.ext.newbuildnr = Integer.parseInt(project.ext.buildnr) + 1
+        print "Building extension version: " + version.toString() + "-" + project.ext.newbuildnr
+        rootProject.file('builder.txt').text = project.ext.newbuildnr
+        System.clearProperty("extensionVersion")
+        System.setProperty("extensionVersion", version.toString() + "-" + project.ext.newbuildnr)
+    }
+}
+compileJava.dependsOn clean
+compileJava.dependsOn updateVersion
+
 System.setProperty("extensionVersion", version.toString())
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+sourceCompatibility = '21'
+targetCompatibility = '21'
 
 repositories {
     mavenLocal()
     maven {
         url "https://packages.cicd.in.antbrains.com/artifactory/libs-release"
-    }
-    mavenCentral()
-}
-
-
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    options.compilerArgs << '-Xlint:all,-serial'
-}
-
-task compile() {
-    dependsOn compileJava
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            afterEvaluate {
-                artifactId = jar.archiveBaseName.get()
-                groupId = rootProject.group
-            }
-        }
-    }
-    repositories {
-        mavenLocal()
-        maven {
-            credentials {
-                username = rootProject.properties['MAVEN_USERNAME']
-                password = rootProject.properties['MAVEN_PASSWORD']
-            }
-            authentication {
-                basic(BasicAuthentication)
-            }
-            url rootProject.properties['MAVEN_UPLOAD_URL']
-        }
     }
 }
 
@@ -64,65 +72,162 @@ configurations {
 }
 
 dependencies {
-
-    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.56'
-    compileOnly 'app.krista:krista-apis:1.0.56'
-    compileOnly 'org.glassfish.hk2:hk2-api:3.0.3'
+    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.117'
+    implementation 'app.krista:krista-apis:1.0.117'
+    implementation 'org.glassfish.hk2:hk2-api:3.0.3'
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
     implementation group: 'org.json', name: 'json', version: '20210307'
 
     testImplementation 'com.kristasoft.common:common-test:1.0.30'
     testImplementation 'com.mockrunner:mockrunner-jdbc:2.0.6'
-    testImplementation 'app.krista:krista-apis:1.0.56'
+    testImplementation 'app.krista:krista-apis:1.0.117'
 
+    // Modern Mockito for JDK 17/21/23 compatibility
+    testImplementation 'org.mockito:mockito-core:5.12.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
 }
 
-task createSourceDir(type: Exec) {
+// Configure Mockito inline mock-maker for JDK 21+/23
+// We avoid -javaagent because mockito-core does not provide Premain; self-attach works with mock-maker-inline + add-opens
+
+test {
+    // Needed for Mockito/Byte Buddy on JDK 17/21/23 to access core classes
+    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+    jvmArgs '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED'
+
+    // Enable Byte Buddy support for Java 23
+    systemProperty 'net.bytebuddy.experimental', 'true'
+}
+
+
+tasks.register('createSourceDir', Exec) {
     dependsOn processResources
     commandLine "mkdir", "-p", "$projectDir/build/classes/java/main/META-INF/project"
 }
 
-task copyGradleFile(type: Exec) {
+tasks.register('copyGradleFile', Exec) {
     dependsOn createSourceDir
     commandLine "cp", "$projectDir/build.gradle", "$projectDir/build/classes/java/main/META-INF/project/build.gradle"
 }
 
-task includeSources(type: Exec) {
+tasks.register('includeSources', Exec) {
     dependsOn copyGradleFile
     commandLine "cp", "-r", "$projectDir/src", "$projectDir/build/classes/java/main/META-INF/project/src"
 }
 
-task candidate(type: Exec) {
-    commandLine "env",
-            "DOCKER_UPLOAD_REPO=" + rootProject.properties['DOCKER_UPLOAD_REPO'],
-            "MAVEN_URL=" + System.properties['MAVEN_URL'],
-            "MAVEN_UPLOAD_URL=" + rootProject.properties['MAVEN_UPLOAD_URL'],
-            "MAVEN_USERNAME=" + rootProject.properties['MAVEN_USERNAME'],
-            "MAVEN_PASSWORD=" + rootProject.properties['MAVEN_PASSWORD'],
-            "bash", "candidate.sh"
-    standardOutput = new ByteArrayOutputStream()
-    ext.output = {
-        return standardOutput.toString()
+import java.util.regex.Pattern
+
+/*
+    Task to generate release.properties files in below format.
+    extension.version=<version>
+    extension.name=<name>
+    domain.name=<domain>
+    ecosystem.name=<ecosystem>
+    Every extension developer should update extensionFile and areaFileName with relative path.
+ */
+
+abstract class GenerateReleasePropertiesTask extends DefaultTask {
+    @TaskAction
+    def generateProperties() {
+        // Update this path to point to your salesforce customer service extension main class
+        def extensionFilePath = 'src/main/java/app/krista/extensions/crm/marketing_management/salesforce_marketing/SalesforceMarketingExtension.java'
+        def areaFilePath = 'src/main/java/app/krista/extensions/crm/marketing_management/salesforce_marketing/catalog/ContentArea.java'
+
+        def extensionFile = project.file(extensionFilePath)
+        def areaFile = project.file(areaFilePath)
+        if (!extensionFile.exists()) {
+            throw new GradleException("Extension file not found: ${extensionFilePath}")
+        }
+        if (!areaFile.exists()) {
+            throw new GradleException("Area file not found: ${areaFilePath}")
+        }
+        def properties = new Properties()
+        def keyValuePattern = Pattern.compile(/(\w+)\s*=\s*"([^"]+)"/)
+
+        // Extract Extension annotation info
+        extractAnnotationInfo(extensionFile, "@Extension", keyValuePattern) { key, value ->
+            if (key == "name") {
+                properties.setProperty("extension.name", value)
+                logger.lifecycle("Found extension name: ${value}")
+            } else if (key == "version") {
+                properties.setProperty("extension.version", value)
+                logger.lifecycle("Found extension version: ${value}")
+            }
+        }
+
+        // Extract Domain annotation info
+        extractAnnotationInfo(areaFile, "@Domain", keyValuePattern) { key, value ->
+            if (key == "name") {
+                properties.setProperty("domain.name", value)
+                logger.lifecycle("Found domain name: ${value}")
+            } else if (key == "ecosystemName") {
+                properties.setProperty("ecosystem.name", value)
+                logger.lifecycle("Found ecosystem name: ${value}")
+            }
+        }
+
+        if (!properties.getProperty('extension.version')) {
+            throw new GradleException("Could not find extension version in ${extensionFilePath}")
+        }
+        if (!properties.getProperty('domain.name') || !properties.getProperty('ecosystem.name')) {
+            throw new GradleException("Could not find domain name or ecosystem name in ${extensionFilePath}")
+        }
+
+        def releasePropertiesFile = project.file('release.properties')
+        def content = properties.collect { key, value -> "${key}=${value}" }.join('\n')
+        releasePropertiesFile.text = content + '\n'
+        logger.lifecycle("Generated release.properties with content:\n${content}")
+    }
+
+    /**
+     * Extracts annotation information from a file
+     * @param file The file to extract from
+     * @param annotationName The annotation name to look for
+     * @param keyValuePattern The regex pattern to extract key-value pairs
+     * @param processProperty Closure to process each property
+     */
+    private static void extractAnnotationInfo(File file, String annotationName, Pattern keyValuePattern, Closure processProperty) {
+        StringBuilder annotationText = new StringBuilder()
+        boolean inAnnotation = false
+        file.eachLine { line ->
+            line = line.trim()
+            if (line.contains(annotationName)) {
+                inAnnotation = true
+            }
+            if (inAnnotation) {
+                annotationText.append(line)
+                if (line.contains(")")) {
+                    inAnnotation = false
+                    def matcher = keyValuePattern.matcher(annotationText.toString())
+                    while (matcher.find()) {
+                        def key = matcher.group(1)
+                        def value = matcher.group(2)
+                        processProperty.call(key, value)
+                    }
+                }
+            }
+        }
     }
 }
 
-task release(type: Exec) {
-    commandLine "env",
-            "DOCKER_UPLOAD_REPO=" + rootProject.properties['DOCKER_UPLOAD_REPO'],
-            "MAVEN_URL=" + System.properties['MAVEN_URL'],
-            "MAVEN_UPLOAD_URL=" + rootProject.properties['MAVEN_UPLOAD_URL'],
-            "MAVEN_USERNAME=" + rootProject.properties['MAVEN_USERNAME'],
-            "MAVEN_PASSWORD=" + rootProject.properties['MAVEN_PASSWORD'],
-            "bash", "release.sh"
-    standardOutput = new ByteArrayOutputStream()
-    ext.output = {
-        return standardOutput.toString()
-    }
+tasks.register('generateReleaseProperties', GenerateReleasePropertiesTask) {
+    group = 'build'
+    description = 'Generates release.properties file with extension version and domain information'
 }
+tasks.named("jar") {
+    dependsOn tasks.named("generateReleaseProperties")
+}
+
 
 jar {
     manifest {
     }
+    // This task ensures that release.properties is read *after* it has been generated.
+    // Gradle's configuration phase runs before tasks like `generateReleaseProperties` execute,
+    // so directly reading the release.properties file earlier results in missing or default values.
+    dependsOn tasks.named("setReleaseProperties")
+    archiveBaseName = project.ext.has("finalBaseName") ? project.ext.finalBaseName : "SalesforceMarketing"
+    manifest {}
     from {
         configurations.implementation.collect {
             it.isDirectory() ? it : zipTree(it)
@@ -131,7 +236,3 @@ jar {
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
     duplicatesStrategy = "exclude"
 }
-
-
-
-

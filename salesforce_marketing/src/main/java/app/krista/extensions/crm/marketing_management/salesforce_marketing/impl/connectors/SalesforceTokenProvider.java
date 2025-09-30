@@ -9,6 +9,10 @@ import app.krista.ksdk.context.RequestContext;
 import app.krista.model.field.NamedValuedField;
 import com.github.scribejava.apis.salesforce.SalesforceToken;
 import com.github.scribejava.core.model.OAuth2AccessToken;
+import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -18,6 +22,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public final class SalesforceTokenProvider {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceTokenProvider.class);
 
     private final RefreshTokenStore refreshTokenStore;
     private final RequestContext requestContext;
@@ -46,46 +52,61 @@ public final class SalesforceTokenProvider {
     }
 
     /**
-     * This function will return Salesforce Token for the requested user
+     * Retrieves a Salesforce token for the current user.
      *
-     * @return {@link SalesforceToken}
-     * @throws IOException if there is error in user input
+     * @return A valid Salesforce token for the current user
      */
     public SalesforceToken getSalesforceToken() throws IOException {
-        return getSalesforceToken(requestContext.invokeAsUser());
+        return getSalesforceToken(requestContext.invokeAsUser(), null);
     }
 
     /**
-     * This function will create salesforce token for admin user
-     *
-     * @throws IOException if there is error in user input
+     * Retrieves a Salesforce token for admin operations.
      */
     public void getSalesforceTokenForAdmin() throws IOException {
-        getSalesforceToken(false);
+        getSalesforceToken(false, null);
     }
 
     /**
-     * This function will return the {@link SalesforceToken} for both admin and user
-     *
-     * @param isAdmin is the salesforce token for admin or user
-     * @return {@link SalesforceToken} object
-     * @throws IOException if there is error in user input
+     * Backward-compatible delegate preserving original signature.
      */
     private SalesforceToken getSalesforceToken(boolean isAdmin) throws IOException {
-        if (isAdmin || (salesforceMarketingAttributes.getUserName() == null || salesforceMarketingAttributes.getUserName().isBlank() ||
-                salesforceMarketingAttributes.getPassword() == null || salesforceMarketingAttributes.getPassword().isBlank() ||
-                salesforceMarketingAttributes.getSecurityToken() == null || salesforceMarketingAttributes.getSecurityToken().isBlank())) {
-            String refreshToken = refreshTokenStore.get(authorizationContext.getAuthorizedAccount().getAccountId() + "&" + salesforceMarketingAttributes.getClientId() + salesforceMarketingAttributes.getClientSecret());
-            if (refreshToken == null || refreshToken.isBlank()) {
-                throw createMustAuthorizationException(false);
-            }
-            try {
-                return getSalesforceToken(salesforceMarketingAttributes.getOauthService().refreshAccessToken(refreshToken));
-            } catch (IOException | ExecutionException cause) {
-                throw new IllegalStateException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
-            } catch (InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(interruptedException.getMessage());
+        return getSalesforceToken(isAdmin, null);
+    }
+
+    /**
+     * Retrieves a Salesforce token based on the specified parameters.
+     *
+     * @param isAdmin   Whether the token is for admin operations
+     * @param accountId The account ID to use, or null to use the current authorized account
+     * @return A valid Salesforce token
+     * @throws IllegalArgumentException If the provided credentials are invalid
+     * @throws MustAuthorizeException   If authorization is required to obtain a new token
+     */
+    private SalesforceToken getSalesforceToken(boolean isAdmin, String accountId) throws IllegalArgumentException {
+        if (validateUsingOAuth(isAdmin, salesforceMarketingAttributes)) {
+            String domain = salesforceMarketingAttributes.getInstanceUrl();
+            if (domain != null && !domain.isEmpty()) {
+                return getTokenUsingClientCredentials(domain);
+            } else {
+                String effectiveAccountId = accountId == null ? authorizationContext.getAuthorizedAccount().getAccountId() : accountId;
+                String refreshToken = refreshTokenStore.get(effectiveAccountId + "&" + salesforceMarketingAttributes.getClientId() + salesforceMarketingAttributes.getClientSecret());
+                if (refreshToken == null || refreshToken.isBlank()) {
+                    throw createMustAuthorizationException(false);
+                }
+                try {
+                    return getSalesforceTokenForUser(salesforceMarketingAttributes.getOauthService().refreshAccessToken(refreshToken));
+                } catch (MustAuthorizeException cause) {
+                    throw createMustAuthorizationException(true);
+                } catch (OAuth2AccessTokenErrorResponse cause) {
+                    if (cause.getErrorDescription() != null && cause.getErrorDescription().equals("expired access/refresh token")) {
+                        throw createMustAuthorizationException(true);
+                    }
+                    throw new RuntimeException("Something went wrong, please try again later. " + cause.getErrorDescription(), cause);
+                } catch (InterruptedException | ExecutionException | IOException cause) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
+                }
             }
         } else {
             Object username = salesforceMarketingAttributes.getUserName();
@@ -93,16 +114,55 @@ public final class SalesforceTokenProvider {
             Object securityToken = salesforceMarketingAttributes.getSecurityToken();
 
             try {
-                return getSalesforceToken(
+                return getSalesforceTokenForUser(
                         salesforceMarketingAttributes.getOauthService().getAccessTokenPasswordGrant(String.valueOf(username),
                                 password + String.valueOf(securityToken)));
-            } catch (IOException | ExecutionException cause) {
-                throw new MustAuthorizeException(cause.getMessage());
-            } catch (InterruptedException cause) {
-                Thread.currentThread().interrupt();
-                throw new MustAuthorizeException(cause.getMessage());
+            } catch (Exception cause) {
+                String message = this.getErrorMessage(cause);
+                throw new IllegalArgumentException(message, cause);
             }
         }
+    }
+
+    /**
+     * Retrieves a Salesforce token using OAuth 2.0 Client Credentials flow.
+     *
+     * @param domain The Salesforce instance domain
+     * @return A valid Salesforce token
+     * @throws IllegalArgumentException If the client credentials are invalid or the request fails
+     */
+    private SalesforceToken getTokenUsingClientCredentials(String domain) throws IllegalArgumentException {
+        try {
+            return getSalesforceTokenForUser(salesforceMarketingAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
+        } catch (Exception cause) {
+            LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
+            String message = this.getErrorMessage(cause);
+            throw new IllegalArgumentException(message, cause);
+        }
+    }
+
+    /**
+     * Returns a user-friendly error message parsed from exception content.
+     */
+    private String getErrorMessage(Exception cause) {
+        String message = cause.getMessage();
+        if (message != null) {
+            try {
+                JSONObject json = new JSONObject(message);
+                if (json.has("error")) {
+                    String errorMessage = json.getString("error");
+                    return switch (errorMessage) {
+                        case "invalid_client" -> "Authentication failed. Please check your Salesforce client credentials.";
+                        case "invalid_grant" -> "Authentication failed. Please check your Salesforce username, password, and security token.";
+                        default -> "Authentication failed: " + errorMessage;
+                    };
+                }
+            } catch (Exception exception) {
+                LOGGER.debug("Failed to parse error message as JSON: {}", exception.getMessage(), exception);
+                return "Provided attributes are not valid.";
+            }
+        }
+        return "An unexpected error occurred. Please contact support.";
     }
 
     /**
@@ -111,14 +171,25 @@ public final class SalesforceTokenProvider {
      * @param accessToken {@link OAuth2AccessToken} value
      * @return {@link SalesforceToken} object
      */
-    private SalesforceToken getSalesforceToken(OAuth2AccessToken accessToken) {
+    private SalesforceToken getSalesforceTokenForUser(OAuth2AccessToken accessToken) {
         final SalesforceToken salesforceAccessToken;
         if (accessToken instanceof SalesforceToken) {
             salesforceAccessToken = (SalesforceToken) accessToken;
+        } else if (accessToken.getAccessToken() != null) {
+            salesforceAccessToken = new SalesforceToken(accessToken.getAccessToken(), salesforceMarketingAttributes.getInstanceUrl(), accessToken.getRawResponse());
         } else {
-            throw new MustAuthorizeException(Constants.SALESFORCE_DIDN_T_RETURN_THE_CORRECT_TOKEN_PLEASE_REAUTHORIZE);
+            throw new IllegalArgumentException(Constants.SALESFORCE_DIDN_T_RETURN_THE_CORRECT_TOKEN_PLEASE_REAUTHORIZE);
         }
         return salesforceAccessToken;
+    }
+
+    /**
+     * Determines whether OAuth-based authentication should be used based on the context and attributes.
+     */
+    public static boolean validateUsingOAuth(boolean isAdmin, SalesforceMarketingAttributes attributes) {
+        return isAdmin || (attributes.getUserName() == null || attributes.getUserName().isBlank() ||
+                attributes.getPassword() == null || attributes.getPassword().isBlank() ||
+                attributes.getSecurityToken() == null || attributes.getSecurityToken().isBlank());
     }
 
     /**

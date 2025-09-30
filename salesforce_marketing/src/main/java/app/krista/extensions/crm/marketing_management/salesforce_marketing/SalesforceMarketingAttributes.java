@@ -4,6 +4,7 @@ import app.krista.extension.executor.Invoker;
 import app.krista.extension.request.RoutingInfo;
 import app.krista.extension.request.protos.http.HttpProtocol;
 import app.krista.extension.util.InvokerAttributes;
+import app.krista.extensions.crm.marketing_management.salesforce_marketing.api.SalesforceCustomApi;
 import com.github.scribejava.apis.SalesforceApi;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -17,11 +18,13 @@ import java.util.Map;
 public final class SalesforceMarketingAttributes {
     public static final String CLIENT_ID = "clientId";
     public static final String CLIENT_SECRET = "clientSecret";
+    public static final String INSTANCE_URL = "Instance URL";
     public static final String USER_NAME = "username";
     public static final String PASSWORD = "password";
     public static final String SECURITY_TOKEN = "securityToken";
     private String clientId;
     private String clientSecret;
+    private String instanceUrl;
     private String userName;
     private String password;
     private String securityToken;
@@ -37,15 +40,17 @@ public final class SalesforceMarketingAttributes {
     public SalesforceMarketingAttributes(String routingURL, Map<String, Object> attributes) {
         this((String) attributes.get(CLIENT_ID),
                 (String) attributes.get(CLIENT_SECRET),
+                (String) attributes.get(INSTANCE_URL),
                 (String) attributes.get(USER_NAME),
                 (String) attributes.get(PASSWORD),
                 (String) attributes.get(SECURITY_TOKEN),
                 routingURL);
     }
 
-    public SalesforceMarketingAttributes(String clientId, String clientSecret, String userName, String password, String securityToken, String routingUrl) {
+    public SalesforceMarketingAttributes(String clientId, String clientSecret, String instanceUrl, String userName, String password, String securityToken, String routingUrl) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        this.instanceUrl = instanceUrl;
         this.userName = userName;
         this.password = password;
         this.securityToken = securityToken;
@@ -62,6 +67,10 @@ public final class SalesforceMarketingAttributes {
 
     public String getClientSecret() {
         return clientSecret;
+    }
+
+    public String getInstanceUrl() {
+        return instanceUrl;
     }
 
     public String getUserName() {
@@ -91,9 +100,16 @@ public final class SalesforceMarketingAttributes {
         return oAuthService;
     }
 
+    public synchronized OAuth20Service getOauthService(String domain) {
+        return new ServiceBuilder(getClientId())
+                .apiSecret(getClientSecret())
+                .build(new SalesforceCustomApi(domain));
+    }
+
     public void update(Map<String, Object> newAttributes) {
         clientId = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_ID);
         clientSecret = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_SECRET);
+        instanceUrl = InvokerAttributes.getStringOrNull(newAttributes, INSTANCE_URL);
         userName = InvokerAttributes.getStringOrNull(newAttributes, USER_NAME);
         password = InvokerAttributes.getStringOrNull(newAttributes, PASSWORD);
         securityToken = InvokerAttributes.getStringOrNull(newAttributes, SECURITY_TOKEN);
