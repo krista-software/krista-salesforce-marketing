@@ -228,10 +228,18 @@ The OAuth 2.0 Client Credentials Flow enables direct server-to-server authentica
   ![Enable Client Credentials Flow](../_media/enableClientCredentials.png)
 
 ### Step 4: Configure OAuth Scopes
-* Add required scopes:
-  * **Manage user data via APIs** (api) - Essential for API access
-  * **Access custom permissions** (custom_permissions) - If using custom permissions
-  * **Full access** (full) - For comprehensive access (use carefully)
+* In **Selected OAuth Scopes**, add the following scopes:
+  * **Access Analytics REST API Charts Geodata resources** (eclair_api)
+  * **Access Analytics REST API resources** (wave_api)
+  * **Access Chatter API resources** (chatter_api)
+  * **Access Visualforce applications** (visualforce)
+  * **Access custom permissions** (custom_permissions)
+  * **Access the identity URL service** (id, profile, email, address, phone)
+  * **Access unique user identifiers** (openid)
+  * **Full access** (full)
+  * **Manage user data via APIs** (api)
+  * **Manage user data via Web browsers** (web)
+  * **Perform requests at any time** (refresh_token, offline_access)
 
 ### Step 5: Obtain Client Credentials
 * Click **Save** and **Continue**
