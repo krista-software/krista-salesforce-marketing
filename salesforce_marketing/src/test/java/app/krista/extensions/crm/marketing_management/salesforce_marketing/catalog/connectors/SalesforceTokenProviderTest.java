@@ -188,8 +188,107 @@ public class SalesforceTokenProviderTest {
             CLIENT_ID, CLIENT_SECRET, null, USERNAME, "", SECURITY_TOKEN, ROUTING_URL);
         assertTrue("Mixed credentials should trigger OAuth",
                   SalesforceTokenProvider.validateUsingOAuth(false, attributes3));
+    }
 
+    /**
+     * Test admin operations always use OAuth regardless of other credentials.
+     */
+    @Test
+    public void testAdminOperationsAlwaysUseOAuth() {
+        // Admin with complete password credentials should still use OAuth
+        SalesforceMarketingAttributes completePasswordAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, USERNAME, PASSWORD, SECURITY_TOKEN, ROUTING_URL);
 
+        assertTrue("Admin operations should always use OAuth even with complete password credentials",
+                  SalesforceTokenProvider.validateUsingOAuth(true, completePasswordAttrs));
 
+        // Admin with instance URL should use OAuth
+        SalesforceMarketingAttributes instanceUrlAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, INSTANCE_URL, null, null, null, ROUTING_URL);
+
+        assertTrue("Admin operations should always use OAuth with instance URL",
+                  SalesforceTokenProvider.validateUsingOAuth(true, instanceUrlAttrs));
+
+        // Admin with no credentials should use OAuth
+        SalesforceMarketingAttributes noCredsAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, null, null, null, ROUTING_URL);
+
+        assertTrue("Admin operations should always use OAuth with no credentials",
+                  SalesforceTokenProvider.validateUsingOAuth(true, noCredsAttrs));
+    }
+
+    /**
+     * Test instance URL precedence over password credentials.
+     */
+    @Test
+    public void testInstanceUrlPrecedence() {
+        // Instance URL with complete password credentials should use OAuth (Client Credentials)
+        SalesforceMarketingAttributes mixedAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, INSTANCE_URL, USERNAME, PASSWORD, SECURITY_TOKEN, ROUTING_URL);
+
+        assertTrue("Instance URL should take precedence over password credentials",
+                  SalesforceTokenProvider.validateUsingOAuth(false, mixedAttrs));
+
+        // Instance URL with incomplete password credentials should use OAuth
+        SalesforceMarketingAttributes incompleteWithUrlAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, INSTANCE_URL, USERNAME, null, SECURITY_TOKEN, ROUTING_URL);
+
+        assertTrue("Instance URL should take precedence over incomplete password credentials",
+                  SalesforceTokenProvider.validateUsingOAuth(false, incompleteWithUrlAttrs));
+
+        // Whitespace instance URL should not take precedence
+        SalesforceMarketingAttributes whitespaceUrlAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, "   ", USERNAME, PASSWORD, SECURITY_TOKEN, ROUTING_URL);
+
+        assertFalse("Whitespace instance URL should not take precedence",
+                   SalesforceTokenProvider.validateUsingOAuth(false, whitespaceUrlAttrs));
+    }
+
+    /**
+     * Test various incomplete credential combinations.
+     */
+    @Test
+    public void testIncompleteCredentialCombinations() {
+        // Only username provided
+        SalesforceMarketingAttributes usernameOnlyAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, USERNAME, null, null, ROUTING_URL);
+
+        assertTrue("Username-only should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, usernameOnlyAttrs));
+
+        // Only password provided
+        SalesforceMarketingAttributes passwordOnlyAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, null, PASSWORD, null, ROUTING_URL);
+
+        assertTrue("Password-only should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, passwordOnlyAttrs));
+
+        // Only security token provided
+        SalesforceMarketingAttributes tokenOnlyAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, null, null, SECURITY_TOKEN, ROUTING_URL);
+
+        assertTrue("Security token-only should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, tokenOnlyAttrs));
+
+        // Username and password but no security token
+        SalesforceMarketingAttributes noTokenAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, USERNAME, PASSWORD, null, ROUTING_URL);
+
+        assertTrue("Missing security token should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, noTokenAttrs));
+
+        // Username and security token but no password
+        SalesforceMarketingAttributes noPasswordAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, USERNAME, null, SECURITY_TOKEN, ROUTING_URL);
+
+        assertTrue("Missing password should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, noPasswordAttrs));
+
+        // Password and security token but no username
+        SalesforceMarketingAttributes noUsernameAttrs = new SalesforceMarketingAttributes(
+            CLIENT_ID, CLIENT_SECRET, null, null, PASSWORD, SECURITY_TOKEN, ROUTING_URL);
+
+        assertTrue("Missing username should use OAuth",
+                  SalesforceTokenProvider.validateUsingOAuth(false, noUsernameAttrs));
     }
 }

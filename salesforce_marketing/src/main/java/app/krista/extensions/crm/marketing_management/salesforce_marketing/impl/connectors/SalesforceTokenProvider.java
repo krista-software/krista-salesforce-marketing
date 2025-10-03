@@ -77,9 +77,17 @@ public final class SalesforceTokenProvider {
     /**
      * Retrieves a Salesforce token based on the specified parameters.
      *
-     * @param isAdmin   Whether the token is for admin operations
+     * <p>This method automatically selects the appropriate authentication flow based on
+     * the configuration and parameters:</p>
+     * <ul>
+     *   <li>Client Credentials flow if Instance URL is provided</li>
+     *   <li>Authorization Code flow if no Instance URL and incomplete password credentials</li>
+     *   <li>Password Grant flow if complete username/password/token credentials are provided</li>
+     * </ul>
+     *
+     * @param isAdmin   Whether the token is for admin operations (forces OAuth flow)
      * @param accountId The account ID to use, or null to use the current authorized account
-     * @return A valid Salesforce token
+     * @return          A valid Salesforce token for API access
      * @throws IllegalArgumentException If the provided credentials are invalid
      * @throws MustAuthorizeException   If authorization is required to obtain a new token
      */
@@ -87,39 +95,61 @@ public final class SalesforceTokenProvider {
         if (validateUsingOAuth(isAdmin, salesforceMarketingAttributes)) {
             String domain = salesforceMarketingAttributes.getInstanceUrl();
             if (domain != null && !domain.isEmpty()) {
+                LOGGER.debug("Using Client Credentials flow for domain: {}", domain);
                 return getTokenUsingClientCredentials(domain);
             } else {
+                LOGGER.debug("Using Authorization Code flow with refresh token");
                 String effectiveAccountId = accountId == null ? authorizationContext.getAuthorizedAccount().getAccountId() : accountId;
                 String refreshToken = refreshTokenStore.get(effectiveAccountId + "&" + salesforceMarketingAttributes.getClientId() + salesforceMarketingAttributes.getClientSecret());
                 if (refreshToken == null || refreshToken.isBlank()) {
+                    LOGGER.debug("No refresh token found for account: {}", effectiveAccountId);
                     throw createMustAuthorizationException(false);
                 }
                 try {
+                    LOGGER.debug("Attempting to refresh access token for account: {}", effectiveAccountId);
                     return getSalesforceTokenForUser(salesforceMarketingAttributes.getOauthService().refreshAccessToken(refreshToken));
                 } catch (MustAuthorizeException cause) {
+                    LOGGER.debug("Authorization required after refresh token attempt");
                     throw createMustAuthorizationException(true);
                 } catch (OAuth2AccessTokenErrorResponse cause) {
                     if (cause.getErrorDescription() != null && cause.getErrorDescription().equals("expired access/refresh token")) {
+                        LOGGER.debug("Refresh token expired, re-authorization required");
                         throw createMustAuthorizationException(true);
                     }
+                    LOGGER.error("OAuth token refresh failed: {} - {}", cause.getError(), cause.getErrorDescription());
                     throw new RuntimeException("Something went wrong, please try again later. " + cause.getErrorDescription(), cause);
                 } catch (InterruptedException | ExecutionException | IOException cause) {
                     Thread.currentThread().interrupt();
+                    LOGGER.error("Token refresh interrupted or failed: {}", cause.getMessage(), cause);
                     throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
                 }
             }
         } else {
+            LOGGER.debug("Using Password Grant flow");
             Object username = salesforceMarketingAttributes.getUserName();
             Object password = salesforceMarketingAttributes.getPassword();
             Object securityToken = salesforceMarketingAttributes.getSecurityToken();
 
             try {
+                LOGGER.debug("Attempting OAuth 2.0 Password Grant flow for username: {}", username);
                 return getSalesforceTokenForUser(
                         salesforceMarketingAttributes.getOauthService().getAccessTokenPasswordGrant(String.valueOf(username),
                                 password + String.valueOf(securityToken)));
-            } catch (Exception cause) {
+            } catch (OAuth2AccessTokenErrorResponse cause) {
+                LOGGER.error("OAuth 2.0 Password Grant failed with error: {} - {}", cause.getError(), cause.getErrorDescription());
                 String message = this.getErrorMessage(cause);
                 throw new IllegalArgumentException(message, cause);
+            } catch (InterruptedException cause) {
+                Thread.currentThread().interrupt();
+                LOGGER.error("Password Grant authentication was interrupted: {}", cause.getMessage());
+                throw new RuntimeException("Authentication was interrupted. Please try again.", cause);
+            } catch (ExecutionException cause) {
+                LOGGER.error("Password Grant authentication execution failed: {}", cause.getMessage(), cause);
+                String message = this.getErrorMessage(cause);
+                throw new IllegalArgumentException(message, cause);
+            } catch (IOException cause) {
+                LOGGER.error("Network error during Password Grant authentication: {}", cause.getMessage(), cause);
+                throw new RuntimeException("Network error during authentication. Please check your connection and try again.", cause);
             }
         }
     }
@@ -133,11 +163,24 @@ public final class SalesforceTokenProvider {
      */
     private SalesforceToken getTokenUsingClientCredentials(String domain) throws IllegalArgumentException {
         try {
+            LOGGER.debug("Attempting OAuth 2.0 Client Credentials flow for domain: {}", domain);
             return getSalesforceTokenForUser(salesforceMarketingAttributes.getOauthService(domain).getAccessTokenClientCredentialsGrant());
-        } catch (Exception cause) {
-            LOGGER.error("Failed to get access token for user. - {}", cause.getMessage(), cause);
+        } catch (OAuth2AccessTokenErrorResponse cause) {
+            LOGGER.error("OAuth 2.0 Client Credentials failed with error: {} - {} for domain: {}",
+                        cause.getError(), cause.getErrorDescription(), domain);
             String message = this.getErrorMessage(cause);
             throw new IllegalArgumentException(message, cause);
+        } catch (InterruptedException cause) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Client Credentials authentication was interrupted for domain: {}", domain);
+            throw new RuntimeException("Authentication was interrupted. Please try again.", cause);
+        } catch (ExecutionException cause) {
+            LOGGER.error("Client Credentials authentication execution failed for domain: {} - {}", domain, cause.getMessage(), cause);
+            String message = this.getErrorMessage(cause);
+            throw new IllegalArgumentException(message, cause);
+        } catch (IOException cause) {
+            LOGGER.error("Network error during Client Credentials authentication for domain: {} - {}", domain, cause.getMessage(), cause);
+            throw new RuntimeException("Network error during authentication. Please check your connection and try again.", cause);
         }
     }
 
@@ -185,11 +228,36 @@ public final class SalesforceTokenProvider {
 
     /**
      * Determines whether OAuth-based authentication should be used based on the context and attributes.
+     *
+     * @param isAdmin Whether this is an admin operation
+     * @param attributes The Salesforce marketing attributes containing authentication configuration
+     * @return true if OAuth should be used, false if Password Grant should be used
      */
     public static boolean validateUsingOAuth(boolean isAdmin, SalesforceMarketingAttributes attributes) {
-        return isAdmin || (attributes.getUserName() == null || attributes.getUserName().isBlank() ||
-                attributes.getPassword() == null || attributes.getPassword().isBlank() ||
-                attributes.getSecurityToken() == null || attributes.getSecurityToken().isBlank());
+        boolean hasInstanceUrl = attributes.getInstanceUrl() != null && !attributes.getInstanceUrl().trim().isEmpty();
+        boolean hasCompletePasswordCredentials = attributes.getUserName() != null && !attributes.getUserName().isBlank() &&
+                attributes.getPassword() != null && !attributes.getPassword().isBlank() &&
+                attributes.getSecurityToken() != null && !attributes.getSecurityToken().isBlank();
+
+        boolean useOAuth = isAdmin || !hasCompletePasswordCredentials;
+
+        // Log the authentication decision
+        if (LOGGER.isDebugEnabled()) {
+            if (isAdmin) {
+                LOGGER.debug("Using OAuth flow because admin operation is requested");
+            } else if (hasInstanceUrl) {
+                LOGGER.debug("Using OAuth Client Credentials flow because Instance URL is configured: {}", attributes.getInstanceUrl());
+            } else if (!hasCompletePasswordCredentials) {
+                LOGGER.debug("Using OAuth Authorization Code flow because password credentials are incomplete (username: {}, password: {}, token: {})",
+                           attributes.getUserName() != null && !attributes.getUserName().isBlank() ? "present" : "missing",
+                           attributes.getPassword() != null && !attributes.getPassword().isBlank() ? "present" : "missing",
+                           attributes.getSecurityToken() != null && !attributes.getSecurityToken().isBlank() ? "present" : "missing");
+            } else {
+                LOGGER.debug("Using OAuth Password Grant flow with username: {}", attributes.getUserName());
+            }
+        }
+
+        return useOAuth;
     }
 
     /**

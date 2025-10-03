@@ -1,16 +1,47 @@
+/*
+ * Salesforce Marketing Extension Build Configuration
+ *
+ * This build script supports Java 21 and includes automated release property generation,
+ * modern dependency management, and comprehensive testing configuration.
+ *
+ * Key Features:
+ * - Java 21 compatibility with proper JVM arguments for Mockito/Byte Buddy
+ * - Automated extension metadata extraction from annotations
+ * - Dynamic version and name resolution from release.properties
+ * - Modern Mockito configuration for testing
+ * - Source code inclusion in JAR for debugging
+ */
+
 apply plugin: 'java-library'
 jar.archiveBaseName = "salesforce_marketing-extension"
 group 'app.krista.extensions.crm.marketing_management'
 
 /*
- * Use extension.name for archiveBaseName, extension.version for version.
- * Resulting jar: <extension.name>-<extension.version>.jar e.g. Salesforce Marketing-2.0.5.jar
+ * Default values for extension name and version.
+ * These will be overridden by values extracted from @Extension and @Domain annotations
+ * via the generateReleaseProperties task.
+ *
+ * Final JAR format: <extension.name>-<extension.version>.jar
+ * Example: SalesforceMarketing-2.0.5.jar
  */
 def computedBaseName = "SalesforceMarketing"
 def computedVersion = "local"
 
+// Ensure clean build by removing previous artifacts before compilation
 compileJava.dependsOn clean
 
+/*
+ * Task: setReleaseProperties
+ *
+ * Reads the generated release.properties file and sets project properties accordingly.
+ * This task runs after generateReleaseProperties to ensure the properties file exists.
+ *
+ * Responsibilities:
+ * - Load extension name and version from release.properties
+ * - Set system properties for runtime access
+ * - Configure project version and final JAR name
+ * - Provide fallback to default values if properties file is missing
+ */
 tasks.register("setReleaseProperties") {
     dependsOn("generateReleaseProperties")
     doFirst {
@@ -18,9 +49,12 @@ tasks.register("setReleaseProperties") {
         if (releasePropsFile.exists()) {
             def props = new Properties()
             releasePropsFile.withInputStream { stream -> props.load(stream) }
+
+            // Remove spaces from extension name for JAR filename
             computedBaseName = (props['extension.name'] ?: computedBaseName).replaceAll(/\s+/, "")
             computedVersion = props['extension.version'] ?: computedVersion
 
+            // Set system property for runtime access to version
             System.setProperty("extensionVersion", computedVersion)
             project.ext.set("finalBaseName", computedBaseName)
             project.version = computedVersion
@@ -34,11 +68,27 @@ tasks.register("setReleaseProperties") {
     }
 }
 
+/*
+ * Build Number Management
+ *
+ * Maintains an incremental build number in builder.txt for development builds.
+ * This provides unique version identifiers for each build during development.
+ */
 if (rootProject.file('builder.txt').canRead()) {
     ext.buildnr = rootProject.file('builder.txt').text.trim()
 } else {
     ext.buildnr = "0"
 }
+
+/*
+ * Task: updateVersion
+ *
+ * Increments the build number and updates the system property for runtime access.
+ * This ensures each build has a unique identifier during development.
+ *
+ * Note: This is primarily for development builds. Production builds should use
+ * the version from the @Extension annotation via generateReleaseProperties.
+ */
 tasks.register('updateVersion') {
     doFirst {
         project.ext.newbuildnr = Integer.parseInt(project.ext.buildnr) + 1
@@ -48,14 +98,31 @@ tasks.register('updateVersion') {
         System.setProperty("extensionVersion", version.toString() + "-" + project.ext.newbuildnr)
     }
 }
+
+// Task dependencies for compilation
 compileJava.dependsOn clean
 compileJava.dependsOn updateVersion
 
+// Set initial system property for version access
 System.setProperty("extensionVersion", version.toString())
 
+/*
+ * Java 21 Configuration
+ *
+ * This extension is built and tested with Java 21, providing access to the latest
+ * language features and performance improvements. The build system includes proper
+ * JVM arguments for compatibility with testing frameworks like Mockito.
+ */
 sourceCompatibility = '21'
 targetCompatibility = '21'
 
+/*
+ * Repository Configuration
+ *
+ * Uses Maven Local for local development and Krista's internal Artifactory
+ * for production dependencies. This ensures consistent dependency resolution
+ * across development and CI/CD environments.
+ */
 repositories {
     mavenLocal()
     maven {
@@ -63,7 +130,12 @@ repositories {
     }
 }
 
-
+/*
+ * Configuration Management
+ *
+ * Configures the implementation configuration to be resolvable but not consumable,
+ * which is the recommended practice for library projects to avoid dependency conflicts.
+ */
 configurations {
     implementation {
         canBeConsumed = false
@@ -71,45 +143,118 @@ configurations {
     }
 }
 
+/*
+ * Dependency Configuration
+ *
+ * Production Dependencies:
+ * - extension-impl-anno-processors: Krista's annotation processors for extension metadata
+ * - krista-apis: Core Krista platform APIs and utilities
+ * - hk2-api: Dependency injection framework used by Krista platform
+ * - scribejava-apis: OAuth 2.0 client library for Salesforce authentication
+ * - json: JSON processing library for API responses
+ *
+ * Test Dependencies:
+ * - common-test: Krista's common testing utilities
+ * - mockrunner-jdbc: JDBC mocking for database tests
+ * - mockito-core/junit-jupiter: Modern Mockito with Java 21 compatibility
+ */
 dependencies {
+    // Annotation processing for extension metadata
     annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.117'
+
+    // Core platform dependencies
     implementation 'app.krista:krista-apis:1.0.117'
     implementation 'org.glassfish.hk2:hk2-api:3.0.3'
+
+    // OAuth 2.0 and JSON processing
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
     implementation group: 'org.json', name: 'json', version: '20210307'
 
+    // Testing framework dependencies
     testImplementation 'com.kristasoft.common:common-test:1.0.30'
     testImplementation 'com.mockrunner:mockrunner-jdbc:2.0.6'
     testImplementation 'app.krista:krista-apis:1.0.117'
 
-    // Modern Mockito for JDK 17/21/23 compatibility
+    // JUnit 5 (Jupiter) testing framework
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+
+    // Modern Mockito with Java 21 compatibility
+    // Version 5.12.0 includes proper support for Java 21 and Byte Buddy integration
     testImplementation 'org.mockito:mockito-core:5.12.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
+
+    // XML parsing dependencies for Java 21 compatibility
+    // Required for Log4j XML configuration parsing in test environment
+    testImplementation 'xerces:xercesImpl:2.12.2'
+    testImplementation 'xml-apis:xml-apis:1.4.01'
 }
 
-// Configure Mockito inline mock-maker for JDK 21+/23
-// We avoid -javaagent because mockito-core does not provide Premain; self-attach works with mock-maker-inline + add-opens
-
+/*
+ * Java 21 Testing Configuration
+ *
+ * Configures JVM arguments required for Mockito and Byte Buddy to work properly
+ * with Java 21's module system. These arguments are essential for:
+ *
+ * 1. Mockito's dynamic proxy generation and bytecode manipulation
+ * 2. Byte Buddy's class loading and instrumentation capabilities
+ * 3. Access to internal Java classes required for mocking
+ *
+ * The configuration avoids using -javaagent because mockito-core 5.12.0
+ * uses self-attach mechanism which is more reliable with modern JDK versions.
+ */
 test {
-    // Needed for Mockito/Byte Buddy on JDK 17/21/23 to access core classes
+    // Required JVM arguments for Mockito/Byte Buddy on Java 21
+    // These open internal Java modules to allow bytecode manipulation
     jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
     jvmArgs '--add-opens', 'java.base/java.lang.invoke=ALL-UNNAMED'
 
-    // Enable Byte Buddy support for Java 23
+    // Enable experimental Byte Buddy features for future Java versions
+    // This ensures forward compatibility with Java 23 and beyond
     systemProperty 'net.bytebuddy.experimental', 'true'
+
+    // Use JUnit Platform for test execution
+    useJUnitPlatform()
 }
 
 
+/*
+ * Source Code Inclusion Tasks
+ *
+ * These tasks include the complete source code and build configuration in the final JAR
+ * for debugging and troubleshooting purposes. This is particularly useful for:
+ *
+ * 1. Production debugging when source maps are needed
+ * 2. Extension development and customization
+ * 3. Compliance and audit requirements
+ * 4. Support team troubleshooting
+ */
+
+/*
+ * Task: createSourceDir
+ * Creates the META-INF/project directory structure in the build output
+ */
 tasks.register('createSourceDir', Exec) {
     dependsOn processResources
     commandLine "mkdir", "-p", "$projectDir/build/classes/java/main/META-INF/project"
 }
 
+/*
+ * Task: copyGradleFile
+ * Copies the build.gradle file to the META-INF/project directory
+ * This preserves the build configuration for reference
+ */
 tasks.register('copyGradleFile', Exec) {
     dependsOn createSourceDir
     commandLine "cp", "$projectDir/build.gradle", "$projectDir/build/classes/java/main/META-INF/project/build.gradle"
 }
 
+/*
+ * Task: includeSources
+ * Copies the entire src directory to META-INF/project/src
+ * This includes all source code, resources, and test files
+ */
 tasks.register('includeSources', Exec) {
     dependsOn copyGradleFile
     commandLine "cp", "-r", "$projectDir/src", "$projectDir/build/classes/java/main/META-INF/project/src"

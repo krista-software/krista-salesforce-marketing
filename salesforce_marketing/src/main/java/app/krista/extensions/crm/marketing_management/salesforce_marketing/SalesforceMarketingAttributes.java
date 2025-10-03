@@ -9,19 +9,36 @@ import com.github.scribejava.apis.SalesforceApi;
 import com.github.scribejava.core.builder.ServiceBuilder;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import org.jvnet.hk2.annotations.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
 
+/**
+ * Configuration attributes for Salesforce Marketing Extension.
+ * This class manages authentication credentials and configuration for connecting to Salesforce
+ * using various authentication flows including OAuth 2.0 Client Credentials, Authorization Code,
+ * and Password Grant flows.
+ *
+ * @author Krista Extensions Team
+ * @version 2.0.5
+ * @since 1.0.0
+ */
 @Service
 public final class SalesforceMarketingAttributes {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SalesforceMarketingAttributes.class);
+
     public static final String CLIENT_ID = "clientId";
     public static final String CLIENT_SECRET = "clientSecret";
     public static final String INSTANCE_URL = "Instance URL";
     public static final String USER_NAME = "username";
     public static final String PASSWORD = "password";
     public static final String SECURITY_TOKEN = "securityToken";
+
     private String clientId;
     private String clientSecret;
     private String instanceUrl;
@@ -47,14 +64,100 @@ public final class SalesforceMarketingAttributes {
                 routingURL);
     }
 
+    /**
+     * Constructs SalesforceMarketingAttributes with all authentication parameters.
+     *
+     * @param clientId The OAuth 2.0 client ID
+     * @param clientSecret The OAuth 2.0 client secret
+     * @param instanceUrl The Salesforce instance URL (optional, used for Client Credentials flow)
+     * @param userName The Salesforce username (optional, used for Password Grant flow)
+     * @param password The Salesforce password (optional, used for Password Grant flow)
+     * @param securityToken The Salesforce security token (optional, used for Password Grant flow)
+     * @param routingUrl The routing URL for OAuth callbacks
+     * @throws IllegalArgumentException if instanceUrl is provided but not a valid URL format
+     */
     public SalesforceMarketingAttributes(String clientId, String clientSecret, String instanceUrl, String userName, String password, String securityToken, String routingUrl) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.instanceUrl = instanceUrl;
+        this.instanceUrl = validateAndSetInstanceUrl(instanceUrl);
         this.userName = userName;
         this.password = password;
         this.securityToken = securityToken;
         this.routingUrl = routingUrl;
+
+        // Log the authentication method that will be used
+        logAuthenticationMethod();
+    }
+
+    /**
+     * Validates the instance URL format if provided and checks for consistency.
+     *
+     * @param instanceUrl The instance URL to validate
+     * @return The validated instance URL or null if not provided
+     * @throws IllegalArgumentException if the URL format is invalid
+     */
+    private String validateAndSetInstanceUrl(String instanceUrl) {
+        if (instanceUrl != null && !instanceUrl.trim().isEmpty()) {
+            try {
+                URL url = new URL(instanceUrl.trim());
+                String validatedUrl = instanceUrl.trim();
+                String host = url.getHost().toLowerCase();
+
+                // Validate that it's a Salesforce domain
+                if (!host.contains("salesforce.com") && !host.contains("force.com")) {
+                    LOGGER.warn("Instance URL does not appear to be a Salesforce domain: {}", host);
+                }
+
+                // Check for sandbox consistency
+                validateSandboxConsistency(host, validatedUrl);
+
+                return validatedUrl;
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("Invalid Instance URL format: " + instanceUrl, e);
+            }
+        }
+        return instanceUrl;
+    }
+
+    /**
+     * Validates that the instance URL is consistent with sandbox expectations.
+     * Provides warnings for potential configuration mismatches.
+     *
+     * @param host The hostname from the instance URL
+     * @param instanceUrl The full instance URL for logging
+     */
+    private void validateSandboxConsistency(String host, String instanceUrl) {
+        boolean isSandboxUrl = host.contains("sandbox") || host.contains("--") || host.contains("develop");
+
+        if (isSandboxUrl) {
+            LOGGER.debug("Detected sandbox instance URL: {}", instanceUrl);
+            // Additional sandbox-specific validations could be added here
+            if (host.contains("--") && !host.contains("sandbox")) {
+                LOGGER.warn("URL appears to be a sandbox (contains '--') but doesn't contain 'sandbox': {}", instanceUrl);
+            }
+        } else if (host.contains("my.salesforce.com")) {
+            LOGGER.debug("Detected production instance URL: {}", instanceUrl);
+        } else if (host.contains("develop") || host.contains("-dev-ed")) {
+            LOGGER.debug("Detected developer edition instance URL: {}", instanceUrl);
+        }
+
+        // Validate HTTPS usage for production-like environments
+        if (!instanceUrl.startsWith("https://") && !host.contains("localhost") && !host.contains("127.0.0.1")) {
+            LOGGER.warn("Instance URL should use HTTPS for security: {}", instanceUrl);
+        }
+    }
+
+    /**
+     * Logs the authentication method that will be used based on current configuration.
+     */
+    private void logAuthenticationMethod() {
+        if (instanceUrl != null && !instanceUrl.trim().isEmpty()) {
+            LOGGER.debug("Configured for OAuth 2.0 Client Credentials flow with Instance URL: {}", instanceUrl);
+        } else if (userName != null && !userName.trim().isEmpty()) {
+            LOGGER.debug("Configured for OAuth 2.0 Password Grant flow with username: {}", userName);
+        } else {
+            LOGGER.debug("Configured for OAuth 2.0 Authorization Code flow (requires user authorization)");
+        }
     }
 
     public static SalesforceMarketingAttributes create(Invoker invoker, Map<String, Object> attributes) {
@@ -106,13 +209,26 @@ public final class SalesforceMarketingAttributes {
                 .build(new SalesforceCustomApi(domain));
     }
 
+    /**
+     * Updates the attributes with new values from the provided map.
+     * Validates the instance URL if provided.
+     *
+     * @param newAttributes Map containing the new attribute values
+     * @throws IllegalArgumentException if the new instance URL format is invalid
+     */
     public void update(Map<String, Object> newAttributes) {
         clientId = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_ID);
         clientSecret = InvokerAttributes.getStringOrNull(newAttributes, CLIENT_SECRET);
-        instanceUrl = InvokerAttributes.getStringOrNull(newAttributes, INSTANCE_URL);
+        instanceUrl = validateAndSetInstanceUrl(InvokerAttributes.getStringOrNull(newAttributes, INSTANCE_URL));
         userName = InvokerAttributes.getStringOrNull(newAttributes, USER_NAME);
         password = InvokerAttributes.getStringOrNull(newAttributes, PASSWORD);
         securityToken = InvokerAttributes.getStringOrNull(newAttributes, SECURITY_TOKEN);
+
+        // Clear cached OAuth service since configuration changed
+        oAuthService = null;
+
+        // Log the new authentication method
+        logAuthenticationMethod();
     }
 
 }
