@@ -1,10 +1,15 @@
 package app.krista.extensions.crm.marketing_management.salesforce_marketing.util;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 
 public final class DatePlus {
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
      * This function will return time stamp in required date format
@@ -13,9 +18,9 @@ public final class DatePlus {
      * @return formatted date string
      */
     public static String getYYYYMMDD(long date) {
-        SimpleDateFormat sdf;
-        sdf = new SimpleDateFormat("yyyy-MM-dd");
-        return sdf.format(new Date(date));
+        return Instant.ofEpochMilli(date)
+                .atZone(ZoneId.systemDefault())
+                .format(FORMATTER);
     }
 
     /**
@@ -25,10 +30,10 @@ public final class DatePlus {
      * @return {@link Date} object
      */
     public static Date fromYYYYMMDD(String date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         try {
-            return sdf.parse(date);
-        } catch (ParseException e) {
+            LocalDate localDate = LocalDate.parse(date, FORMATTER);
+            return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        } catch (DateTimeParseException e) {
             return null;
         }
     }

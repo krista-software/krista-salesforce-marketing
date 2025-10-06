@@ -37,8 +37,11 @@ public class CampaignDaoImpl implements CampaignDao {
 
     @Override
     public List<Campaign> getCampaignByName(String name, long size, long page, String orderByField, String orderByOperand) {
+        // Escape single quotes and SOQL wildcards to prevent SOQL injection
+        String escapedName = name.replace("'", "\\'").replace("%", "\\%").replace("_", "\\_");
+
         return getCampaignByQuery(Constants.SELECT + QUERY_FIELDS + Constants.FROM_CAMPAIGN + "where name LIKE '%" +
-                name + "%' " + Constants.ORDER_BY +
+                escapedName + "%' " + Constants.ORDER_BY +
                 orderByField + Constants.SPACE +
                 orderByOperand + Constants.LIMIT +
                 size + Constants.OFFSET + Math.max((page - 1) * size, 0));
@@ -50,17 +53,24 @@ public class CampaignDaoImpl implements CampaignDao {
             return getCampaignByName(name, size, page, orderByField, orderByOperand);
         }
 
+        // Escape single quotes and SOQL wildcards to prevent SOQL injection
+        String escapedName = name.replace("'", "\\'").replace("%", "\\%").replace("_", "\\_");
+        String escapedType = type.replace("'", "\\'").replace("%", "\\%").replace("_", "\\_");
+
         return getCampaignByQuery(Constants.SELECT + QUERY_FIELDS + Constants.FROM_CAMPAIGN + "where name LIKE '%" +
-                name + "%' AND Type LIKE '%" + type + "%' " + Constants.ORDER_BY +
+                escapedName + "%' AND Type LIKE '%" + escapedType + "%' " + Constants.ORDER_BY +
                 orderByField + Constants.SPACE +
                 orderByOperand + Constants.LIMIT + size + Constants.OFFSET + Math.max((page - 1) * size, 0));
     }
 
     @Override
     public List<Campaign> getCampaignByType(String type, long size, long page, String orderByField, String orderByOperand) {
+        // Escape single quotes and SOQL wildcards to prevent SOQL injection
+        String escapedType = type.replace("'", "\\'").replace("%", "\\%").replace("_", "\\_");
+
         return getCampaignByQuery(
                 Constants.SELECT + QUERY_FIELDS + Constants.FROM_CAMPAIGN +
-                        "where type LIKE '%" + type + "%' " +
+                        "where type LIKE '%" + escapedType + "%' " +
                         Constants.ORDER_BY +
                         orderByField + Constants.SPACE +
                         orderByOperand +
@@ -70,9 +80,12 @@ public class CampaignDaoImpl implements CampaignDao {
 
     @Override
     public List<Campaign> getCampaignByStatus(String status, long size, long page, String orderByField, String orderByOperand) {
+        // Escape single quotes and SOQL wildcards to prevent SOQL injection
+        String escapedStatus = status.replace("'", "\\'").replace("%", "\\%").replace("_", "\\_");
+
         return getCampaignByQuery(
                 Constants.SELECT + QUERY_FIELDS + Constants.FROM_CAMPAIGN +
-                        "where status LIKE '%" + status + "%' " +
+                        "where status LIKE '%" + escapedStatus + "%' " +
                         Constants.ORDER_BY + orderByField + Constants.SPACE + orderByOperand +
                         Constants.LIMIT + size +
                         Constants.OFFSET + Math.max((page - 1) * size, 0));
