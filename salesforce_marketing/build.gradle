@@ -1,47 +1,16 @@
-/*
- * Salesforce Marketing Extension Build Configuration
- *
- * This build script supports Java 21 and includes automated release property generation,
- * modern dependency management, and comprehensive testing configuration.
- *
- * Key Features:
- * - Java 21 compatibility with proper JVM arguments for Mockito/Byte Buddy
- * - Automated extension metadata extraction from annotations
- * - Dynamic version and name resolution from release.properties
- * - Modern Mockito configuration for testing
- * - Source code inclusion in JAR for debugging
- */
-
 apply plugin: 'java-library'
 jar.archiveBaseName = "salesforce_marketing-extension"
 group 'app.krista.extensions.crm.marketing_management'
 
 /*
- * Default values for extension name and version.
- * These will be overridden by values extracted from @Extension and @Domain annotations
- * via the generateReleaseProperties task.
- *
- * Final JAR format: <extension.name>-<extension.version>.jar
- * Example: SalesforceMarketing-2.0.5.jar
+ * Use extension.name for archiveBaseName, extension.version for version.
+ * Resulting jar: <extension.name>-<extension.version>.jar e.g. Salesforce Marketing-2.0.5.jar
  */
 def computedBaseName = "SalesforceMarketing"
 def computedVersion = "local"
 
-// Ensure clean build by removing previous artifacts before compilation
 compileJava.dependsOn clean
 
-/*
- * Task: setReleaseProperties
- *
- * Reads the generated release.properties file and sets project properties accordingly.
- * This task runs after generateReleaseProperties to ensure the properties file exists.
- *
- * Responsibilities:
- * - Load extension name and version from release.properties
- * - Set system properties for runtime access
- * - Configure project version and final JAR name
- * - Provide fallback to default values if properties file is missing
- */
 tasks.register("setReleaseProperties") {
     dependsOn("generateReleaseProperties")
     doFirst {
@@ -49,95 +18,69 @@ tasks.register("setReleaseProperties") {
         if (releasePropsFile.exists()) {
             def props = new Properties()
             releasePropsFile.withInputStream { stream -> props.load(stream) }
-
-            // Remove spaces from extension name for JAR filename
             computedBaseName = (props['extension.name'] ?: computedBaseName).replaceAll(/\s+/, "")
             computedVersion = props['extension.version'] ?: computedVersion
 
-            // Set system property for runtime access to version
             System.setProperty("extensionVersion", computedVersion)
-            project.ext.set("finalBaseName", computedBaseName)
-            project.version = computedVersion
+            ext.set("finalBaseName", computedBaseName)
+            version = computedVersion
 
             println "✔ Loaded extension name = ${computedBaseName}, version = ${computedVersion}"
         } else {
             logger.warn("⚠ release.properties not found; using default values.")
-            project.ext.set("finalBaseName", computedBaseName)
-            project.version = computedVersion
+            ext.set("finalBaseName", computedBaseName)
+            version = computedVersion
         }
     }
 }
 
-/*
- * Build Number Management
- *
- * Maintains an incremental build number in builder.txt for development builds.
- * This provides unique version identifiers for each build during development.
- */
 if (rootProject.file('builder.txt').canRead()) {
     ext.buildnr = rootProject.file('builder.txt').text.trim()
 } else {
     ext.buildnr = "0"
 }
+def buildnrProvider = provider { ext.buildnr }
 
-/*
- * Task: updateVersion
- *
- * Increments the build number and updates the system property for runtime access.
- * This ensures each build has a unique identifier during development.
- *
- * Note: This is primarily for development builds. Production builds should use
- * the version from the @Extension annotation via generateReleaseProperties.
- */
 tasks.register('updateVersion') {
     doFirst {
-        project.ext.newbuildnr = Integer.parseInt(project.ext.buildnr) + 1
-        print "Building extension version: " + version.toString() + "-" + project.ext.newbuildnr
-        rootProject.file('builder.txt').text = project.ext.newbuildnr
+        def currentBuildnr = buildnrProvider.get()
+        def newbuildnr = Integer.parseInt(currentBuildnr) + 1
+        print "Building extension version: " + version.toString() + "-" + newbuildnr
+        rootProject.file('builder.txt').text = newbuildnr.toString()
         System.clearProperty("extensionVersion")
-        System.setProperty("extensionVersion", version.toString() + "-" + project.ext.newbuildnr)
+        System.setProperty("extensionVersion", version.toString() + "-" + newbuildnr)
     }
 }
-
-// Task dependencies for compilation
 compileJava.dependsOn clean
 compileJava.dependsOn updateVersion
 
-// Set initial system property for version access
 System.setProperty("extensionVersion", version.toString())
 
-/*
- * Java 21 Configuration
- *
- * This extension is built and tested with Java 21, providing access to the latest
- * language features and performance improvements. The build system includes proper
- * JVM arguments for compatibility with testing frameworks like Mockito.
- */
-sourceCompatibility = '21'
-targetCompatibility = '21'
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
-/*
- * Repository Configuration
- *
- * Uses Maven Local for local development and Krista's internal Artifactory
- * for production dependencies. This ensures consistent dependency resolution
- * across development and CI/CD environments.
- */
+// Add compiler options to show deprecation warnings
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['-Xlint:deprecation']
+}
+
 repositories {
     mavenLocal()
     maven {
-        url "https://packages.cicd.in.antbrains.com/artifactory/libs-release"
+        url = "https://packages.cicd.in.antbrains.com/artifactory/libs-release"
     }
+    mavenCentral()
 }
 
-/*
- * Configuration Management
- *
- * Configures the implementation configuration to be resolvable but not consumable,
- * which is the recommended practice for library projects to avoid dependency conflicts.
- */
 configurations {
     implementation {
+        canBeConsumed = false
+    }
+    // Create a resolvable configuration for the jar task
+    jarClasspath {
+        extendsFrom implementation
         canBeConsumed = false
         canBeResolved = true
     }
@@ -159,34 +102,21 @@ configurations {
  * - mockito-core/junit-jupiter: Modern Mockito with Java 21 compatibility
  */
 dependencies {
-    // Annotation processing for extension metadata
     annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.117'
-
-    // Core platform dependencies
     implementation 'app.krista:krista-apis:1.0.117'
     implementation 'org.glassfish.hk2:hk2-api:3.0.3'
 
-    // OAuth 2.0 and JSON processing
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
     implementation group: 'org.json', name: 'json', version: '20210307'
 
-    // Testing framework dependencies
     testImplementation 'com.kristasoft.common:common-test:1.0.30'
     testImplementation 'com.mockrunner:mockrunner-jdbc:2.0.6'
     testImplementation 'app.krista:krista-apis:1.0.117'
-
-    // JUnit 5 (Jupiter) testing framework
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
-
-    // Modern Mockito with Java 21 compatibility
-    // Version 5.12.0 includes proper support for Java 21 and Byte Buddy integration
     testImplementation 'org.mockito:mockito-core:5.12.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
-
-    // XML parsing dependencies for Java 21 compatibility
-    // Required for Log4j XML configuration parsing in test environment
     testImplementation 'xerces:xercesImpl:2.12.2'
     testImplementation 'xml-apis:xml-apis:1.4.01'
 }
@@ -240,21 +170,11 @@ tasks.register('createSourceDir', Exec) {
     commandLine "mkdir", "-p", "$projectDir/build/classes/java/main/META-INF/project"
 }
 
-/*
- * Task: copyGradleFile
- * Copies the build.gradle file to the META-INF/project directory
- * This preserves the build configuration for reference
- */
 tasks.register('copyGradleFile', Exec) {
     dependsOn createSourceDir
     commandLine "cp", "$projectDir/build.gradle", "$projectDir/build/classes/java/main/META-INF/project/build.gradle"
 }
 
-/*
- * Task: includeSources
- * Copies the entire src directory to META-INF/project/src
- * This includes all source code, resources, and test files
- */
 tasks.register('includeSources', Exec) {
     dependsOn copyGradleFile
     commandLine "cp", "-r", "$projectDir/src", "$projectDir/build/classes/java/main/META-INF/project/src"
@@ -271,93 +191,112 @@ import java.util.regex.Pattern
     Every extension developer should update extensionFile and areaFileName with relative path.
  */
 
-abstract class GenerateReleasePropertiesTask extends DefaultTask {
-    @TaskAction
-    def generateProperties() {
-        // Update this path to point to your salesforce customer service extension main class
-        def extensionFilePath = 'src/main/java/app/krista/extensions/crm/marketing_management/salesforce_marketing/SalesforceMarketingExtension.java'
-        def areaFilePath = 'src/main/java/app/krista/extensions/crm/marketing_management/salesforce_marketing/catalog/ContentArea.java'
+tasks.register('generateReleaseProperties') {
+    group = 'build'
+    description = 'Generates release.properties file with extension version and domain information'
 
-        def extensionFile = project.file(extensionFilePath)
-        def areaFile = project.file(areaFilePath)
+    doLast {
+        def extensionFilePath = 'src/main/java/app/krista/extensions/crm/marketing_management/salesforce_marketing/SalesforceMarketingExtension.java'
+        def contentAreaFilePath = 'src/main/java/app/krista/extensions/crm/marketing_management/salesforce_marketing/catalog/ContentArea.java'
+
+        def extensionFile = file(extensionFilePath)
+        def contentAreaFile = file(contentAreaFilePath)
+
         if (!extensionFile.exists()) {
             throw new GradleException("Extension file not found: ${extensionFilePath}")
         }
-        if (!areaFile.exists()) {
-            throw new GradleException("Area file not found: ${areaFilePath}")
+        // Check that at least one area file exists
+        if (!contentAreaFile.exists()) {
+            throw new GradleException("None of the area files found. At least one must exist.")
         }
+
         def properties = new Properties()
+        // Pre-compile the regex pattern for better performance
         def keyValuePattern = Pattern.compile(/(\w+)\s*=\s*"([^"]+)"/)
 
-        // Extract Extension annotation info
+        // Extract Extension annotation information
         extractAnnotationInfo(extensionFile, "@Extension", keyValuePattern) { key, value ->
-            if (key == "name") {
-                properties.setProperty("extension.name", value)
-                logger.lifecycle("Found extension name: ${value}")
-            } else if (key == "version") {
+            if (key == "version") {
                 properties.setProperty("extension.version", value)
                 logger.lifecycle("Found extension version: ${value}")
+            } else if (key == "name") {
+                properties.setProperty("extension.name", value)
+                logger.lifecycle("Found extension name: ${value}")
             }
         }
 
-        // Extract Domain annotation info
-        extractAnnotationInfo(areaFile, "@Domain", keyValuePattern) { key, value ->
-            if (key == "name") {
-                properties.setProperty("domain.name", value)
-                logger.lifecycle("Found domain name: ${value}")
-            } else if (key == "ecosystemName") {
-                properties.setProperty("ecosystem.name", value)
-                logger.lifecycle("Found ecosystem name: ${value}")
+        // Set default extension name if not found
+        if (!properties.getProperty('extension.name')) {
+            properties.setProperty("extension.name", "SalesforceMarketing")
+            logger.lifecycle("Set default extension name: SalesforceMarketing")
+        }
+
+        // Try to extract Domain annotation information from all area files
+        def domainFound = false
+        def ecosystemFound = false
+
+        // Check each area file if it exists
+        [contentAreaFile].each { areaFile ->
+            if (areaFile.exists()) {
+                extractAnnotationInfo(areaFile, "@Domain", keyValuePattern) { key, value ->
+                    if (key == "name" && !domainFound) {
+                        properties.setProperty("domain.name", value)
+                        logger.lifecycle("Found domain name: ${value} from ${areaFile.name}")
+                        domainFound = true
+                    } else if (key == "ecosystemName" && !ecosystemFound) {
+                        properties.setProperty("ecosystem.name", value)
+                        logger.lifecycle("Found ecosystem name: ${value} from ${areaFile.name}")
+                        ecosystemFound = true
+                    }
+                }
             }
         }
 
         if (!properties.getProperty('extension.version')) {
             throw new GradleException("Could not find extension version in ${extensionFilePath}")
         }
-        if (!properties.getProperty('domain.name') || !properties.getProperty('ecosystem.name')) {
-            throw new GradleException("Could not find domain name or ecosystem name in ${extensionFilePath}")
+
+        // Set default values if not found in annotations
+        if (!properties.getProperty('domain.name')) {
+            properties.setProperty("domain.name", "marketing_management")
+            logger.lifecycle("Set default domain name: marketing_management")
         }
 
-        def releasePropertiesFile = project.file('release.properties')
+        if (!properties.getProperty('ecosystem.name')) {
+            properties.setProperty("ecosystem.name", "CRM")
+            logger.lifecycle("Set default ecosystem name: CRM")
+        }
+
+        def releasePropertiesFile = file('release.properties')
         def content = properties.collect { key, value -> "${key}=${value}" }.join('\n')
         releasePropertiesFile.text = content + '\n'
         logger.lifecycle("Generated release.properties with content:\n${content}")
     }
+}
 
-    /**
-     * Extracts annotation information from a file
-     * @param file The file to extract from
-     * @param annotationName The annotation name to look for
-     * @param keyValuePattern The regex pattern to extract key-value pairs
-     * @param processProperty Closure to process each property
-     */
-    private static void extractAnnotationInfo(File file, String annotationName, Pattern keyValuePattern, Closure processProperty) {
-        StringBuilder annotationText = new StringBuilder()
-        boolean inAnnotation = false
-        file.eachLine { line ->
-            line = line.trim()
-            if (line.contains(annotationName)) {
-                inAnnotation = true
-            }
-            if (inAnnotation) {
-                annotationText.append(line)
-                if (line.contains(")")) {
-                    inAnnotation = false
-                    def matcher = keyValuePattern.matcher(annotationText.toString())
-                    while (matcher.find()) {
-                        def key = matcher.group(1)
-                        def value = matcher.group(2)
-                        processProperty.call(key, value)
-                    }
-                }
+def extractAnnotationInfo(File file, String annotationName, Pattern keyValuePattern, Closure processProperty) {
+    StringBuilder annotationText = new StringBuilder()
+    boolean inAnnotation = false
+    file.eachLine { line ->
+        line = line.trim()
+        if (line.contains(annotationName)) {
+            inAnnotation = true
+            annotationText.setLength(0) // Reset the buffer when starting a new annotation
+            annotationText.append(line)
+        } else if (inAnnotation) {
+            annotationText.append(line)
+        }
+
+        if (inAnnotation && line.contains(")")) {
+            inAnnotation = false
+            def matcher = keyValuePattern.matcher(annotationText.toString())
+            while (matcher.find()) {
+                def key = matcher.group(1)
+                def value = matcher.group(2)
+                processProperty.call(key, value)
             }
         }
     }
-}
-
-tasks.register('generateReleaseProperties', GenerateReleasePropertiesTask) {
-    group = 'build'
-    description = 'Generates release.properties file with extension version and domain information'
 }
 tasks.named("jar") {
     dependsOn tasks.named("generateReleaseProperties")
@@ -374,7 +313,7 @@ jar {
     archiveBaseName = project.ext.has("finalBaseName") ? project.ext.finalBaseName : "SalesforceMarketing"
     manifest {}
     from {
-        configurations.implementation.collect {
+        configurations.jarClasspath.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }

@@ -1,11 +1,19 @@
-[comment]: <> (Left navigation)
+<!-- Salesforce Marketing Extension Navigation -->
 
 * [Home](/)
 
-* [Overview](pages/overview.md)
+* **Getting Started**
+  * [Extension Configuration](pages/ExtensionConfiguration.md)
+  * [Authentication](pages/Authentication.md)
+  * [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md)
 
-* [Obtaining Auth Credentials](pages/obtainAuthCredentials.md)
+* **Content Operations**
+  * [Retrieve Custom Fields For Given Object](pages/RetrieveCustomFieldsForGivenObject.md)
 
-* [Supported Requests](pages/supportedRequests.md)
+* **Entity Operations**
+  * [Overview](pages/SupportedRequests.md)
+  * [Campaign Entity](pages/CampaignEntity.md)
 
-* [Release Notes](pages/releaseNotes.md)
+* **Additional Resources**
+  * [Troubleshooting](pages/Troubleshooting.md)
+  * [Release Notes](pages/ReleaseNotes.md)
