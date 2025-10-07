@@ -4,8 +4,6 @@ import app.krista.extensions.crm.marketing_management.salesforce_marketing.Sales
 import app.krista.extensions.crm.marketing_management.salesforce_marketing.catalog.entity.Campaign;
 import app.krista.extensions.crm.marketing_management.salesforce_marketing.impl.CampaignDaoImpl;
 import app.krista.extensions.crm.marketing_management.salesforce_marketing.impl.CampaignImpl;
-import app.krista.extensions.crm.marketing_management.salesforce_marketing.impl.SalesforceManager;
-import app.krista.extensions.crm.marketing_management.salesforce_marketing.impl.connectors.SalesforceTokenProvider;
 import app.krista.extensions.crm.marketing_management.salesforce_marketing.model.SFCampaign;
 import app.krista.extensions.crm.marketing_management.salesforce_marketing.util.SalesforceListResponse;
 import com.google.gson.reflect.TypeToken;
@@ -28,11 +26,8 @@ import static app.krista.extensions.crm.marketing_management.salesforce_marketin
 @RunWith(MockitoJUnitRunner.class)
 public class CampaignStoreTest {
 
-    SalesforceManager salesforceManager;
     @InjectMocks
     CampaignStore campaignStore;
-    @Mock
-    SalesforceTokenProvider tokenProvider;
     @Mock
     SalesforceMarketingAttributes salesforceMarketingAttributes;
     @Mock
@@ -45,7 +40,6 @@ public class CampaignStoreTest {
         validId = "7015g000000UG1RAAW";
         validCampaignResponse = "{\"totalSize\":1,\"done\":true,\"records\":[{\"attributes\":{\"type\":\"Campaign\",\"url\":\"/services/data/v55.0/sobjects/Campaign/7015g000000UG1RAAW\"},\"Status\":\"Planned\",\"Name\":\"test response title\",\"Type\":\"Conference\",\"StartDate\":null,\"EndDate\":null,\"ExpectedRevenue\":null,\"BudgetedCost\":null,\"ActualCost\":null,\"ExpectedResponse\":0.0,\"NumberSent\":12.0,\"NumberOfLeads\":0,\"NumberOfContacts\":0,\"NumberOfOpportunities\":0,\"NumberOfConvertedLeads\":0,\"CreatedDate\":\"2023-01-02T16:04:47.000+0000\",\"LastModifiedDate\":\"2023-01-02T16:04:47.000+0000\",\"Id\":\"7015g000000UG1RAAW\"}]}";
 
-        salesforceManager = new SalesforceManager(tokenProvider, salesforceMarketingAttributes);
         campaignStore = new CampaignStore(campaignDaoImpl);
     }
 

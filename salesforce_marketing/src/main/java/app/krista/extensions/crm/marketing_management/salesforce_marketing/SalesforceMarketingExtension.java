@@ -2,10 +2,7 @@ package app.krista.extensions.crm.marketing_management.salesforce_marketing;
 
 import app.krista.extension.authorization.RequestAuthenticator;
 import app.krista.extension.executor.Invoker;
-import app.krista.extension.impl.anno.Extension;
-import app.krista.extension.impl.anno.Field;
-import app.krista.extension.impl.anno.InvokerRequest;
-import app.krista.extension.impl.anno.StaticResource;
+import app.krista.extension.impl.anno.*;
 import app.krista.extensions.crm.marketing_management.salesforce_marketing.impl.connectors.SalesforceTokenProviderFactory;
 import app.krista.extensions.crm.marketing_management.salesforce_marketing.impl.stores.SalesforceMarketingAttributesStore;
 
@@ -15,10 +12,12 @@ import java.util.Map;
 
 @Field.Text(value = SalesforceMarketingAttributes.CLIENT_ID)
 @Field.Text(value = SalesforceMarketingAttributes.CLIENT_SECRET, isSecured = true)
+@Field.Text(value = SalesforceMarketingAttributes.INSTANCE_URL, required = false)
 @Field.Text(value = SalesforceMarketingAttributes.USER_NAME, required = false)
 @Field.Text(value = SalesforceMarketingAttributes.PASSWORD, isSecured = true, required = false)
 @Field.Text(value = SalesforceMarketingAttributes.SECURITY_TOKEN, isSecured = true, required = false)
-@Extension(version = "2.0.4")
+@Extension(version = "2.0.5", name = "Salesforce Marketing", description = "Integrating Salesforce with Krista")
+@Java(version = Java.Version.JAVA_21)
 @StaticResource(path = "docs", file = "documentation")
 public final class SalesforceMarketingExtension {
 

@@ -1,14 +1,19 @@
-[comment]: <> (Left navigation)
+<!-- Salesforce Marketing Extension Navigation -->
 
 * [Home](/)
 
+* **Getting Started**
+  * [Extension Configuration](pages/ExtensionConfiguration.md)
+  * [Authentication](pages/Authentication.md)
+  * [Creating Salesforce Connected App](pages/CreatingSalesforceApp.md)
 
-* [Overview](pages/overview.md)
+* **Content Operations**
+  * [Retrieve Custom Fields For Given Object](pages/RetrieveCustomFieldsForGivenObject.md)
 
-* [Obtaining User and OAuth2.0 Credentials](pages/obtainingUserAndOAuth2.0Credentials.md)
+* **Entity Operations**
+  * [Overview](pages/SupportedRequests.md)
+  * [Campaign Entity](pages/CampaignEntity.md)
 
-* [Connecting Krista Salesforce Marketing Module Extension](pages/connectionWithSalesforceMarketing.md)
-
-* [Supported Requests](pages/supportedRequests.md)
-
-* [Release Notes](pages/releaseNotes.md)
+* **Additional Resources**
+  * [Troubleshooting](pages/Troubleshooting.md)
+  * [Release Notes](pages/ReleaseNotes.md)
