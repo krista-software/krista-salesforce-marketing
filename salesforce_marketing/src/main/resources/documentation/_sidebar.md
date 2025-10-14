@@ -11,9 +11,9 @@
   * [Retrieve Custom Fields For Given Object](pages/RetrieveCustomFieldsForGivenObject.md)
 
 * **Entity Operations**
-  * [Overview](pages/SupportedRequests.md)
+  * [Overview](pages/supportedRequests.md)
   * [Campaign Entity](pages/CampaignEntity.md)
 
 * **Additional Resources**
   * [Troubleshooting](pages/Troubleshooting.md)
-  * [Release Notes](pages/ReleaseNotes.md)
+  * [Release Notes](pages/releaseNotes.md)

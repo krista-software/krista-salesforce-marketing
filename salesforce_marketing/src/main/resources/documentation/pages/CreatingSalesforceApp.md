@@ -220,4 +220,4 @@ After successfully creating your Connected App:
 
 - [Extension Configuration](pages/ExtensionConfiguration.md) - Next steps after app creation
 - [Authentication Guide](pages/Authentication.md) - Understanding OAuth flows
-- [Supported Requests](pages/SupportedRequests.md) - Available functionality
+- [Supported Requests](pages/supportedRequests.md) - Available functionality

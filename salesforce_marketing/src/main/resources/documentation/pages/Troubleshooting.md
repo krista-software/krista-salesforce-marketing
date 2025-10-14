@@ -399,4 +399,4 @@ When reporting issues, include:
 - [Extension Configuration](pages/ExtensionConfiguration.md) - Setup and configuration
 - [Authentication](pages/Authentication.md) - OAuth setup and security
 - [Creating Salesforce App](pages/CreatingSalesforceApp.md) - Connected App setup
-- [Supported Requests](pages/SupportedRequests.md) - API reference and examples
+- [Supported Requests](pages/supportedRequests.md) - API reference and examples

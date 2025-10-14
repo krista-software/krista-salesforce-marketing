@@ -1,6 +1,92 @@
 # Release Notes
 
-## Version 2.0.5 (Current)
+## Version 2.0.6 (Current)
+
+- **Release Date**: December 2024
+- **Developer**: Krista Extensions Team
+- **Krista Service APIs Java**: 1.0.117
+- **Global Catalog Version**: GC-2025.10.1
+- **Compatibility**: Salesforce API v58.0+, Krista Platform 2024.x, Java 21+
+
+### 🆕 New Features
+
+#### Technical Modernization
+- **Java 21 Upgrade**: Full compatibility with Java 21 LTS with enhanced performance and security
+- **Gradle 8.5**: Updated build system with improved dependency management and build performance
+- **Modern Testing Framework**: Comprehensive test suite with 100% coverage for utility classes
+- **Enhanced Error Messages**: Completely rewritten error messages following new format standards
+
+#### Documentation Excellence
+- **Complete Authentication Guide**: New comprehensive OAuth 2.0 documentation with all flows, scopes, and security best practices
+- **Image Standardization**: All documentation images renamed following `<MD_FILE_NAME>_<IMAGE_NAME>.png` convention
+- **Enhanced Catalog Request Documentation**: Detailed technical implementation, validation rules, and telemetry metrics
+- **Improved Cross-References**: Fixed all internal links and improved navigation structure
+
+#### Code Quality Improvements
+- **Comprehensive Test Coverage**: Added real-world test cases for DatePlus utility class and SalesforceManager.getDifference method
+- **Error Message Refactoring**: All error messages now clearly identify problems, explain requirements, and provide actionable resolution steps
+- **Enhanced Validation**: Improved input validation with detailed error scenarios and logging
+
+### 🔧 Improvements
+
+#### Developer Experience
+- **Better Error Diagnostics**: Error messages now include specific causes, requirements, and step-by-step resolution instructions
+- **Enhanced Logging**: Improved telemetry metrics and logging for better debugging and monitoring
+- **Code Documentation**: Updated inline documentation and technical implementation details
+
+#### Build & Deployment
+- **Gradle Wrapper**: Added Gradle 8.5 wrapper for consistent build environment across all platforms
+- **Java 21 Compatibility**: Full support for Java 21 features and optimizations
+- **Dependency Updates**: Updated all dependencies to latest compatible versions
+
+### 🐛 Resolved Issues
+
+#### Documentation
+- **Fixed Image References**: Corrected all broken image links in documentation
+- **Link Consistency**: Fixed case-sensitive file references (SupportedRequests.md → supportedRequests.md)
+- **Navigation Improvements**: Updated _sidebar.md with correct file references
+
+#### Code Quality
+- **Error Message Clarity**: Replaced generic error messages with specific, actionable guidance
+- **Test Coverage**: Added comprehensive edge case testing for utility methods
+- **Validation Logic**: Enhanced field validation with proper error handling and logging
+
+### 📋 Technical Details
+
+#### New Test Classes
+- **DatePlusTest**: Comprehensive testing of date utility methods with edge cases, boundary values, and error conditions
+- **SalesforceManagerTest**: Complete testing of getDifference method with various object types and scenarios
+
+#### Updated Error Messages
+- All error messages in Constants.java now follow the format: Problem identification + Requirements + Resolution steps
+- Enhanced error handling in CampaignStore, CampaignDaoImpl, and SalesforceManager classes
+
+#### Documentation Structure
+- Authentication.md: New comprehensive OAuth 2.0 guide with all flows, scopes, and security practices
+- Image naming: All images follow `<MD_FILE_NAME>_<IMAGE_NAME>.png` convention
+- Cross-references: All internal links verified and corrected
+
+### 🔄 Migration Notes
+
+#### For Developers
+- **Java 21 Required**: Ensure development environment uses Java 21 LTS
+- **Gradle 8.5**: Use included Gradle wrapper for consistent builds
+- **Updated Dependencies**: Review dependency updates for any compatibility impacts
+
+#### For Users
+- **No Breaking Changes**: All existing configurations and integrations remain compatible
+- **Enhanced Error Messages**: Users will see more helpful error messages with specific resolution steps
+- **Improved Documentation**: Updated documentation provides better guidance for setup and troubleshooting
+
+### 🔗 Related Resources
+
+- [Extension Configuration](ExtensionConfiguration.md) - Updated setup guide
+- [Authentication](Authentication.md) - New comprehensive OAuth guide
+- [Troubleshooting](Troubleshooting.md) - Enhanced error resolution guide
+
+---
+
+## Version 2.0.5
 
 - **Release Date**: Current Version
 - **Developer**: Vaibhav Choudhary
@@ -142,4 +228,4 @@
 
 - [Extension Configuration](pages/ExtensionConfiguration.md) - Setup and configuration guide
 - [Authentication](pages/Authentication.md) - OAuth setup and troubleshooting
-- [Supported Requests](pages/SupportedRequests.md) - Complete functionality reference
+- [Supported Requests](pages/supportedRequests.md) - Complete functionality reference

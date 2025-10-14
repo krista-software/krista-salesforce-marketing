@@ -151,7 +151,11 @@ public final class SalesforceManager {
         salesforceMarketingAttributes.getOauthService().signRequest(salesforceToken, request);
         try (com.github.scribejava.core.model.Response response = salesforceMarketingAttributes.getOauthService().execute(request)) {
             if (response.getCode() >= 400) {
-                throw new IllegalArgumentException("Bad Request, Please enter correct required data. The error is " + getErrorMessage(response.getBody()));
+                String errorDetails = getErrorMessage(response.getBody());
+                throw new IllegalArgumentException("Salesforce API request failed with HTTP " + response.getCode() + ". " +
+                    "The request contains invalid data or violates Salesforce validation rules. " +
+                    "Please verify all field values meet the required format and constraints. " +
+                    "Error details: " + (errorDetails != null ? errorDetails : "No additional details available."));
             }
             return response.getBody();
         } catch (IOException | ExecutionException cause) {

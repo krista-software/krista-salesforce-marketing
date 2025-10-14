@@ -20,7 +20,7 @@ import static app.krista.extensions.crm.marketing_management.salesforce_marketin
 public class CampaignDaoImpl implements CampaignDao {
     public static final String QUERY_FIELDS = " Status,Name,Type,StartDate,EndDate,ExpectedRevenue,BudgetedCost,ActualCost,ExpectedResponse,NumberSent,NumberOfLeads,NumberOfContacts,NumberOfOpportunities,NumberOfConvertedLeads,CreatedDate,LastModifiedDate,Id ";
     public static final String ID = "id";
-    public static final String THIS_REQUEST_IS_NOT_YET_IMPLEMENTED = "This request is not yet implemented.";
+    public static final String THIS_REQUEST_IS_NOT_YET_IMPLEMENTED = "Campaign deletion is not supported in this extension version. This operation requires additional validation and dependency checking that is not currently implemented. Please use Salesforce directly to delete campaigns or contact support for assistance.";
 
 
     private final SalesforceManager salesforceManager;

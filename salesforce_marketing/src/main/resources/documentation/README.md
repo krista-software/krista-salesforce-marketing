@@ -24,7 +24,7 @@ The Krista Salesforce Marketing Extension connects to Salesforce's Marketing Clo
 1. **[Create Salesforce Connected App](pages/CreatingSalesforceApp.md)** - Set up OAuth credentials
 2. **[Configure Extension](pages/ExtensionConfiguration.md)** - Set connection parameters
 3. **[Authenticate Connection](pages/Authentication.md)** - Establish secure connection
-4. **[Test Integration](pages/SupportedRequests.md)** - Verify functionality
+4. **[Test Integration](pages/supportedRequests.md)** - Verify functionality
 
 ![Salesforce Marketing Extension Setup Interface](_media/ExtensionConfiguration_SalesforceMarketingSetup.png)
 
@@ -51,8 +51,8 @@ The Krista Salesforce Marketing Extension connects to Salesforce's Marketing Clo
 - **[Troubleshooting Guide](pages/Troubleshooting.md)** - Issue resolution and debugging
 
 ### 📋 **Reference**
-- **[Supported Requests](pages/SupportedRequests.md)** - Complete functionality overview
-- **[Release Notes](pages/ReleaseNotes.md)** - Version history and updates
+- **[Supported Requests](pages/supportedRequests.md)** - Complete functionality overview
+- **[Release Notes](pages/releaseNotes.md)** - Version history and updates
 
 ## Support & Resources
 

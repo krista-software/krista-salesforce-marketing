@@ -45,7 +45,7 @@ public class CampaignStore implements EntityStore<Campaign> {
     @Override
     public Campaign get(String primaryKey) {
         if (primaryKey == null || primaryKey.isBlank()) {
-            throw new IllegalArgumentException("Failed to get case." + Constants.PRIMARY_KEY_IS_EMPTY);
+            throw new IllegalArgumentException("Failed to retrieve campaign. " + Constants.PRIMARY_KEY_IS_EMPTY);
         }
         try {
             app.krista.extensions.crm.marketing_management.salesforce_marketing.service.Campaign campaign = campaignDaoImpl.getCampaignById(primaryKey);
