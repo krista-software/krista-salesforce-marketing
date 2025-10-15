@@ -52,14 +52,26 @@ public final class SalesforceManager {
     public static Map<String, Object> getDifference(Object old, Object newObj) {
         try {
             Map<String, Object> values = new HashMap<>();
-            for (Field field : old.getClass().getDeclaredFields()) {
-                field.setAccessible(true);
-                Object value1 = field.get(old);
-                Object value2 = field.get(newObj);
-                if (value1 != null && value2 != null && !Objects.equals(value1, value2) && !field.getName().contains("id")) {
-                    values.put(field.getName(), value2);
+            Class<?> clazz = old.getClass();
+
+            // Process all fields including inherited ones
+            while (clazz != null && clazz != Object.class) {
+                for (Field field : clazz.getDeclaredFields()) {
+                    field.setAccessible(true);
+                    Object value1 = field.get(old);
+                    Object value2 = field.get(newObj);
+
+                    // Check if field name contains "id" (case-insensitive)
+                    String fieldNameLower = field.getName().toLowerCase();
+                    boolean isIdField = fieldNameLower.contains("id");
+
+                    if (value1 != null && value2 != null && !Objects.equals(value1, value2) && !isIdField) {
+                        values.put(field.getName(), value2);
+                    }
                 }
+                clazz = clazz.getSuperclass();
             }
+
             return values;
         } catch (IllegalAccessException cause) {
             throw new IllegalArgumentException(cause.getMessage());

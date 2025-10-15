@@ -21,7 +21,7 @@ class DatePlusTest {
 
     // Test constants for known dates
     private static final long EPOCH_MILLIS_2023_01_01 = 1672531200000L; // 2023-01-01 00:00:00 UTC
-    private static final long EPOCH_MILLIS_2023_12_31 = 1704067200000L; // 2023-12-31 00:00:00 UTC
+    private static final long EPOCH_MILLIS_2023_12_31 = 1703980800000L; // 2023-12-31 00:00:00 UTC (corrected)
     private static final long EPOCH_MILLIS_1970_01_01 = 0L; // Unix epoch
     private static final long EPOCH_MILLIS_2000_01_01 = 946684800000L; // Y2K
     private static final long EPOCH_MILLIS_LEAP_YEAR = 1582934400000L; // 2020-02-29 (leap year)
@@ -70,10 +70,11 @@ class DatePlusTest {
 
         // When & Then
         assertDoesNotThrow(() -> DatePlus.getYYYYMMDD(maxValue));
-        
+
         String result = DatePlus.getYYYYMMDD(maxValue);
         assertNotNull(result);
-        assertTrue(result.matches("\\d{4}-\\d{2}-\\d{2}"));
+        // For very large years, Java adds a + sign and uses more than 4 digits
+        assertTrue(result.matches("\\+?\\d{4,}-\\d{2}-\\d{2}"));
     }
 
     @Test

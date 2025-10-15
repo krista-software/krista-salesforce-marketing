@@ -4,12 +4,33 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+import java.time.format.SignStyle;
+import java.time.temporal.ChronoField;
 import java.util.Date;
 
 public final class DatePlus {
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    // Formatter for parsing with variable width year (4-10 digits) and strict validation
+    private static final DateTimeFormatter PARSER = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.YEAR, 4, 10, SignStyle.NORMAL)
+            .appendLiteral('-')
+            .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+            .appendLiteral('-')
+            .appendValue(ChronoField.DAY_OF_MONTH, 2)
+            .toFormatter()
+            .withResolverStyle(ResolverStyle.STRICT);
+
+    // Formatter for formatting dates
+    private static final DateTimeFormatter FORMATTER = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.YEAR, 1, 10, SignStyle.NORMAL)
+            .appendLiteral('-')
+            .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+            .appendLiteral('-')
+            .appendValue(ChronoField.DAY_OF_MONTH, 2)
+            .toFormatter();
 
     /**
      * This function will return time stamp in required date format
@@ -30,8 +51,18 @@ public final class DatePlus {
      * @return {@link Date} object
      */
     public static Date fromYYYYMMDD(String date) {
+        // Handle null or empty strings
+        if (date == null || date.isEmpty()) {
+            return null;
+        }
+
+        // Reject negative years (dates starting with -)
+        if (date.startsWith("-")) {
+            return null;
+        }
+
         try {
-            LocalDate localDate = LocalDate.parse(date, FORMATTER);
+            LocalDate localDate = LocalDate.parse(date, PARSER);
             return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
         } catch (DateTimeParseException e) {
             return null;
