@@ -308,4 +308,4 @@ SELECT Competition__c, Budget_Category__c FROM Campaign WHERE Id = '7013000000Xy
 
 - [Extension Configuration](pages/ExtensionConfiguration.md) - Setup and connection configuration
 - [Authentication](pages/Authentication.md) - OAuth setup and troubleshooting
-- [Supported Requests](pages/SupportedRequests.md) - Complete functionality overview
+- [Supported Requests](pages/supportedRequests.md) - Complete functionality overview

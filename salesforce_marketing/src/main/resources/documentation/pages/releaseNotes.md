@@ -80,9 +80,9 @@
 
 ### 🔗 Related Resources
 
-- [Extension Configuration](ExtensionConfiguration.md) - Updated setup guide
-- [Authentication](Authentication.md) - New comprehensive OAuth guide
-- [Troubleshooting](Troubleshooting.md) - Enhanced error resolution guide
+- [Extension Configuration](pages/ExtensionConfiguration.md) - Updated setup guide
+- [Authentication](pages/Authentication.md) - New comprehensive OAuth guide
+- [Troubleshooting](pages/Troubleshooting.md) - Enhanced error resolution guide
 
 ---
 

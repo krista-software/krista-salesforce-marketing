@@ -355,6 +355,6 @@ API Request → 401 Unauthorized → Refresh Token → Success/Failure
 
 ## See Also
 
-- [Extension Configuration](ExtensionConfiguration.md) - Setup and configuration guide
-- [Creating Salesforce App](CreatingSalesforceApp.md) - Connected App setup
-- [Troubleshooting](Troubleshooting.md) - Additional troubleshooting guidance
+- [Extension Configuration](pages/ExtensionConfiguration.md) - Setup and configuration guide
+- [Creating Salesforce App](pages/CreatingSalesforceApp.md) - Connected App setup
+- [Troubleshooting](pages/Troubleshooting.md) - Additional troubleshooting guidance
