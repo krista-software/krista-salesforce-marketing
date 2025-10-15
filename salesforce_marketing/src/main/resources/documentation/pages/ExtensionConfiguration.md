@@ -62,7 +62,7 @@ The extension automatically selects the authentication method based on your conf
 - **Required**: `Client ID` + `Client Secret` (Instance URL blank)
 - **Benefits**: User-specific permissions, secure OAuth flow
 
-![Input Attributes for User Authentication](../_media/ExtensionConfiguration_InputAttributes1.png)
+![Input Attributes for User Authentication](../_media/ExtensionConfiguration_CallbackUrl.png)
 
 ### Step 4: Redirect URI Configuration
 
@@ -168,11 +168,11 @@ For Salesforce Sandbox environments:
 After successful configuration:
 
 1. **[Test Authentication](pages/Authentication.md)** - Verify OAuth flows work correctly
-2. **[Explore Catalog Requests](pages/SupportedRequests.md)** - Try available operations
-3. **[Review Entity Operations](pages/SupportedRequests.md#campaigns)** - Understand Campaign management
+2. **[Explore Catalog Requests](pages/supportedRequests.md)** - Try available operations
+3. **[Review Entity Operations](pages/supportedRequests.md#campaigns)** - Understand Campaign management
 
 ## See Also
 
 - [Authentication Guide](pages/Authentication.md) - Detailed OAuth flow information
 - [Creating Salesforce App](pages/CreatingSalesforceApp.md) - Connected App setup
-- [Supported Requests](pages/SupportedRequests.md) - Available functionality
+- [Supported Requests](pages/supportedRequests.md) - Available functionality

@@ -340,7 +340,7 @@ Actions:
 
 ## See Also
 
-- [Supported Requests](pages/SupportedRequests.md) - Complete API reference
+- [Supported Requests](pages/supportedRequests.md) - Complete API reference
 - [Retrieve Custom Fields For Given Object](pages/RetrieveCustomFieldsForGivenObject.md) - Custom field access
 - [Extension Configuration](pages/ExtensionConfiguration.md) - Setup and permissions
 - [Troubleshooting](pages/Troubleshooting.md) - Issue resolution guide

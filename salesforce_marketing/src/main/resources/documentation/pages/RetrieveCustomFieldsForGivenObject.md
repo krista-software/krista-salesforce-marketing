@@ -56,14 +56,24 @@ The response returns a FreeForm object with custom field names as keys and their
 
 ## Validation Rules
 
-| Validation | Error Message | Resolution |
-|------------|---------------|------------|
-| Object Id is empty | "Object Id is required" | Provide a valid Salesforce record ID |
-| Object Type is empty | "Object Type is required" | Select "Campaign" from the dropdown |
-| Custom Fields list is empty | "Custom Fields list cannot be empty" | Add at least one custom field name |
-| Invalid custom field format | "Field name must end with __c" | Ensure field names follow Salesforce custom field convention |
-| Object not found | "Record not found for given Object Id" | Verify the Object Id exists and is accessible |
-| Field not found | "Custom field does not exist on object" | Verify custom field exists on the specified object type |
+### Input Parameter Validation
+
+| Validation | Behavior | Resolution |
+|------------|----------|------------|
+| Object Id is empty | Platform validation error | Provide a valid Salesforce record ID |
+| Object Type is empty | Platform validation error | Select "Campaign" from the dropdown |
+| Custom Fields list is empty | Platform validation error | Add at least one custom field name |
+| Invalid custom field format | Returns empty FreeForm object | Ensure field names follow Salesforce custom field convention (end with "__c") |
+
+### Runtime Validation
+
+| Scenario | Behavior | Logging |
+|----------|----------|---------|
+| Field name doesn't end with "__c" | Returns empty FreeForm, logs field name | INFO: "{fieldName} is not a custom field" |
+| Salesforce API returns null | Returns empty FreeForm | No specific logging |
+| JSON parsing fails | Returns empty FreeForm | INFO: "Exception occurred due to: {exception}" |
+| No records found | Returns empty FreeForm | INFO: "No records found in the JSON response" |
+| Missing records array | Returns empty FreeForm | INFO: "No 'records' array found in the JSON response" |
 
 ## Error Handling
 
@@ -165,10 +175,28 @@ Custom Fields: ["Campaign_Score__c", "Effectiveness__c"]
 ## Business Rules
 
 1. **Custom Field Validation**: All field names must end with "__c" to be considered valid custom fields
+   - Invalid field names cause immediate return of empty FreeForm object
+   - Validation occurs before API call to Salesforce
+   - Each field name is checked individually in a loop
+
 2. **Object Type Restriction**: Currently limited to "Campaign" objects only
-3. **Field Accessibility**: Only returns fields that the authenticated user has permission to read
-4. **Empty Response**: Returns empty FreeForm object if no valid custom fields are found
-5. **Data Type Preservation**: Field values maintain their original Salesforce data types in the response
+   - Hardcoded in @Field.PickOne annotation with values = {"Campaign"}
+   - Future expansion possible by updating annotation values
+
+3. **Query Construction**: SOQL query built dynamically from validated field names
+   - Fields concatenated with commas, trailing comma removed
+   - Object ID used in WHERE clause for single record retrieval
+
+4. **Response Handling**: Returns empty FreeForm object in multiple scenarios:
+   - Any custom field name doesn't end with "__c"
+   - Salesforce API returns null response
+   - JSON parsing encounters exceptions
+   - No records found in response
+
+5. **Data Type Conversion**: All field values converted to Text type in FreeForm
+   - Null values converted to empty strings
+   - All non-null values converted using toString() method
+   - Original Salesforce data types not preserved in response
 
 ## Limitations
 
@@ -230,6 +258,19 @@ Currently, this is the only catalog request available in the Salesforce Marketin
 - **Validation**: Custom field name format validation (must end with "__c")
 - **Service**: SalesforceManager.getRecordByQuery() for data retrieval
 
+### Area Class
+- **Class**: ContentArea
+- **Package**: app.krista.extensions.crm.marketing_management.salesforce_marketing.catalog
+- **Method**: retrieveCustomFieldsForGivenObject()
+- **Domain**: Marketing Management (CRM ecosystem)
+
+### Validation Flow
+1. **Input Validation**: Checks that custom field names end with "__c"
+2. **Early Return**: Returns empty FreeForm if any field name is invalid
+3. **Query Building**: Constructs SOQL query with validated field names
+4. **API Call**: Executes query through SalesforceManager
+5. **Response Processing**: Parses JSON response through ContentDaoImpl
+
 ### Query Construction
 The request builds a SOQL query dynamically:
 ```sql
@@ -237,9 +278,17 @@ SELECT Competition__c, Budget_Category__c FROM Campaign WHERE Id = '7013000000Xy
 ```
 
 ### Response Processing
-- Parses JSON response from Salesforce API
+- Parses JSON response from Salesforce API using JSONObject
+- Extracts first record from "records" array
 - Maps field names to values in FreeForm object
-- Handles null values and data type conversion
+- Handles null values by converting to empty strings
+- All values stored as "Text" type in FreeForm
+
+### Telemetry Metrics
+- **Logging**: Custom field validation failures logged at INFO level
+- **Error Tracking**: JSON parsing exceptions logged with full stack trace
+- **Response Monitoring**: Null response scenarios logged for debugging
+- **Field Processing**: Missing records and null record scenarios logged
 
 ## Troubleshooting
 
@@ -259,4 +308,4 @@ SELECT Competition__c, Budget_Category__c FROM Campaign WHERE Id = '7013000000Xy
 
 - [Extension Configuration](pages/ExtensionConfiguration.md) - Setup and connection configuration
 - [Authentication](pages/Authentication.md) - OAuth setup and troubleshooting
-- [Supported Requests](pages/SupportedRequests.md) - Complete functionality overview
+- [Supported Requests](pages/supportedRequests.md) - Complete functionality overview
