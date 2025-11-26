@@ -102,8 +102,8 @@ configurations {
  * - mockito-core/junit-jupiter: Modern Mockito with Java 21 compatibility
  */
 dependencies {
-    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.117'
-    implementation 'app.krista:krista-apis:1.0.117'
+    annotationProcessor 'app.krista:extension-impl-anno-processors:1.0.118'
+    implementation 'app.krista:krista-apis:1.0.118'
     implementation 'org.glassfish.hk2:hk2-api:3.0.3'
 
     implementation 'com.github.scribejava:scribejava-apis:8.3.3'
