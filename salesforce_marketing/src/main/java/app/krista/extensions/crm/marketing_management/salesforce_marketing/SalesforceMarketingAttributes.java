@@ -113,7 +113,10 @@ public final class SalesforceMarketingAttributes {
 
                 return validatedUrl;
             } catch (MalformedURLException e) {
-                throw new IllegalArgumentException("Invalid Instance URL format: " + instanceUrl, e);
+                throw new IllegalArgumentException(
+                    "The Instance URL you provided isn't in the correct format. " +
+                    "What to do: Make sure it looks like 'https://yourinstance.salesforce.com' or 'https://yourinstance.my.salesforce.com'. " +
+                    "You provided: " + instanceUrl, e);
             }
         }
         return instanceUrl;

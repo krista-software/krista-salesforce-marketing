@@ -324,19 +324,87 @@ Actions:
 
 ## Troubleshooting
 
-### Common Issues
+### Common Issues and Error Messages
 
-**Issue**: Campaign not found
-**Cause**: Invalid ID or insufficient permissions
-**Solution**: Verify ID format and user permissions
+#### "We couldn't create the campaign in Salesforce"
+**What happened**: Campaign creation failed due to missing or invalid data.
 
-**Issue**: Field update fails
-**Cause**: Validation rules or field-level security
-**Solution**: Check validation rules and field permissions
+**Common causes**:
+- Campaign Name is missing (required field)
+- Field values don't match expected data types
+- Validation rules are not met
 
-**Issue**: Search returns no results
-**Cause**: Restrictive search criteria or sharing rules
-**Solution**: Broaden search criteria and verify sharing settings
+**How to fix**:
+- Ensure Campaign Name is provided
+- Verify all field values match their data types
+- Check validation rules on Campaign object
+- See [Troubleshooting Guide](pages/Troubleshooting.md#issue-we-couldnt-create-the-campaign-in-salesforce) for detailed steps
+
+---
+
+#### "We couldn't update the campaign in Salesforce"
+**What happened**: Campaign update failed due to invalid data or permissions.
+
+**Common causes**:
+- Campaign ID is incorrect or campaign doesn't exist
+- Field values violate validation rules
+- Insufficient edit permissions
+
+**How to fix**:
+- Verify Campaign ID is correct (15-18 chars, starts with '701')
+- Check all field values meet validation requirements
+- Ensure you have edit permission on campaigns
+- See [Troubleshooting Guide](pages/Troubleshooting.md#issue-we-couldnt-update-the-campaign-in-salesforce) for detailed steps
+
+---
+
+#### "A Campaign ID is required to find the campaign"
+**What happened**: Attempted to retrieve or update a campaign without providing the ID.
+
+**Common causes**:
+- Campaign ID field is empty or null
+- ID wasn't captured from previous operation
+
+**How to fix**:
+- Provide a valid Campaign ID (15-18 characters, starts with '701')
+- Ensure ID is captured and stored after campaign creation
+- Verify ID is passed correctly between workflow steps
+- See [Troubleshooting Guide](pages/Troubleshooting.md#issue-a-campaign-id-is-required-to-find-the-campaign) for detailed steps
+
+---
+
+#### "We couldn't search for campaigns with the criteria you provided"
+**What happened**: Campaign search failed due to invalid criteria or permissions.
+
+**Common causes**:
+- Search field name doesn't exist
+- Insufficient read permissions
+- Invalid search operators or values
+
+**How to fix**:
+- Use supported search fields: Name, Status, or Type
+- Verify you have read access to Campaign object
+- Ensure search values are not empty
+- See [Troubleshooting Guide](pages/Troubleshooting.md#issue-we-couldnt-search-for-campaigns-with-the-criteria-you-provided) for detailed steps
+
+---
+
+#### "Campaign deletion is not available in this extension"
+**What happened**: Attempted to delete a campaign, which is not supported.
+
+**Why**: This feature requires additional safety checks to prevent accidental data loss.
+
+**How to delete campaigns**:
+- Log in to Salesforce directly
+- Navigate to the campaign and use the Delete button
+- Or mark campaigns as inactive instead of deleting
+- See [Troubleshooting Guide](pages/Troubleshooting.md#issue-campaign-deletion-is-not-available-in-this-extension) for alternatives
+
+---
+
+### For More Help
+
+For comprehensive troubleshooting information, including authentication issues, network problems, and detailed resolution steps, see the [Troubleshooting Guide](pages/Troubleshooting.md).
 
 ## See Also
 
