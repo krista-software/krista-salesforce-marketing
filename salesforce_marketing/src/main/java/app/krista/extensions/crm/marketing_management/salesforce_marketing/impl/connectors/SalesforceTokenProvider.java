@@ -117,11 +117,17 @@ public final class SalesforceTokenProvider {
                         throw createMustAuthorizationException(true);
                     }
                     LOGGER.error("OAuth token refresh failed: {} - {}", cause.getError(), cause.getErrorDescription());
-                    throw new RuntimeException("Something went wrong, please try again later. " + cause.getErrorDescription(), cause);
+                    throw new RuntimeException("We couldn't refresh your Salesforce connection. " +
+                        "This might be a temporary issue with Salesforce. " +
+                        "What to do: Wait a moment and try again. If the problem continues, re-authorize the extension. " +
+                        "Details: " + cause.getErrorDescription(), cause);
                 } catch (InterruptedException | ExecutionException | IOException cause) {
                     Thread.currentThread().interrupt();
                     LOGGER.error("Token refresh interrupted or failed: {}", cause.getMessage(), cause);
-                    throw new RuntimeException("Refresh Token not found. Please re authorize yourself. " + cause.getMessage(), cause);
+                    throw new RuntimeException("Your authentication token couldn't be refreshed. " +
+                        "This usually means your Salesforce connection has expired. " +
+                        "What to do: Click 'Authorize' in the extension settings to reconnect to Salesforce. " +
+                        "Details: " + cause.getMessage(), cause);
                 }
             }
         } else {
@@ -142,14 +148,16 @@ public final class SalesforceTokenProvider {
             } catch (InterruptedException cause) {
                 Thread.currentThread().interrupt();
                 LOGGER.error("Password Grant authentication was interrupted: {}", cause.getMessage());
-                throw new RuntimeException("Authentication was interrupted. Please try again.", cause);
+                throw new RuntimeException("The authentication process was interrupted. " +
+                    "What to do: Please try logging in again. If this keeps happening, check your network connection.", cause);
             } catch (ExecutionException cause) {
                 LOGGER.error("Password Grant authentication execution failed: {}", cause.getMessage(), cause);
                 String message = this.getErrorMessage(cause);
                 throw new IllegalArgumentException(message, cause);
             } catch (IOException cause) {
                 LOGGER.error("Network error during Password Grant authentication: {}", cause.getMessage(), cause);
-                throw new RuntimeException("Network error during authentication. Please check your connection and try again.", cause);
+                throw new RuntimeException("We couldn't connect to Salesforce to authenticate. " +
+                    "What to do: Check your internet connection and try again. If you're behind a firewall, make sure Salesforce is accessible.", cause);
             }
         }
     }
@@ -195,17 +203,27 @@ public final class SalesforceTokenProvider {
                 if (json.has("error")) {
                     String errorMessage = json.getString("error");
                     return switch (errorMessage) {
-                        case "invalid_client" -> "Authentication failed. Please check your Salesforce client credentials.";
-                        case "invalid_grant" -> "Authentication failed. Please check your Salesforce username, password, and security token.";
-                        default -> "Authentication failed: " + errorMessage;
+                        case "invalid_client" ->
+                            "We couldn't authenticate with Salesforce using your client credentials. " +
+                            "What to do: Check that your Consumer Key and Consumer Secret are correct in the extension settings.";
+                        case "invalid_grant" ->
+                            "Your Salesforce login credentials are incorrect. " +
+                            "What to do: Verify your username, password, and security token are correct. " +
+                            "Remember to append your security token to your password.";
+                        default ->
+                            "Authentication with Salesforce failed. " +
+                            "What to do: Check your credentials and try again. " +
+                            "Error details: " + errorMessage;
                     };
                 }
             } catch (Exception exception) {
                 LOGGER.debug("Failed to parse error message as JSON: {}", exception.getMessage(), exception);
-                return "Provided attributes are not valid.";
+                return "The credentials you provided don't appear to be valid. " +
+                    "What to do: Double-check all your Salesforce connection settings and try again.";
             }
         }
-        return "An unexpected error occurred. Please contact support.";
+        return "Something unexpected happened during authentication. " +
+            "What to do: Try again in a moment. If the problem persists, contact your administrator for help.";
     }
 
     /**

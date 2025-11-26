@@ -2,7 +2,8 @@ package app.krista.extensions.crm.marketing_management.salesforce_marketing.api;
 
 import com.github.scribejava.core.builder.api.DefaultApi20;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Custom Salesforce OAuth 2.0 API implementation that supports configurable Salesforce domains.
@@ -33,8 +34,15 @@ public class SalesforceCustomApi extends DefaultApi20 {
 
         // Validate that the domain is a valid URL
         try {
-            new URL(domain.trim());
-        } catch (MalformedURLException e) {
+            URI uri = new URI(domain.trim());
+
+            // Validate that the URI is absolute (has a scheme)
+            if (!uri.isAbsolute()) {
+                throw new MalformedURLException("URI must be absolute with a scheme (e.g., https://)");
+            }
+
+            uri.toURL(); // Validate URL format
+        } catch (URISyntaxException | MalformedURLException e) {
             throw new IllegalArgumentException("Invalid domain URL format: " + domain, e);
         }
 

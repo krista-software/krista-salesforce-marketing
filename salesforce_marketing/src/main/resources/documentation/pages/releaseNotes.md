@@ -1,11 +1,11 @@
 # Release Notes
 
-## Version 2.0.6 (Current)
+## Version 2.0.7 (Current)
 
 - **Release Date**: December 2024
 - **Developer**: Krista Extensions Team
-- **Krista Service APIs Java**: 1.0.117
-- **Global Catalog Version**: GC-2025.10.1
+- **Krista Service APIs Java**: 1.0.118
+- **Global Catalog Version**: GC-2025.11.5
 - **Compatibility**: Salesforce API v58.0+, Krista Platform 2024.x, Java 21+
 
 ### 🆕 New Features

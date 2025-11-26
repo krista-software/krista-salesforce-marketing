@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
@@ -99,21 +101,37 @@ public final class SalesforceMarketingAttributes {
     private String validateAndSetInstanceUrl(String instanceUrl) {
         if (instanceUrl != null && !instanceUrl.trim().isEmpty()) {
             try {
-                URL url = new URL(instanceUrl.trim());
+                URI uri = new URI(instanceUrl.trim());
+
+                // Validate that the URI is absolute (has a scheme)
+                if (!uri.isAbsolute()) {
+                    throw new MalformedURLException("URI must be absolute with a scheme (e.g., https://)");
+                }
+
+                URL url = uri.toURL();
                 String validatedUrl = instanceUrl.trim();
-                String host = url.getHost().toLowerCase();
+                String host = url.getHost();
+
+                if (host == null || host.isEmpty()) {
+                    throw new MalformedURLException("URL must have a valid host");
+                }
+
+                String hostLower = host.toLowerCase();
 
                 // Validate that it's a Salesforce domain
-                if (!host.contains("salesforce.com") && !host.contains("force.com")) {
+                if (!hostLower.contains("salesforce.com") && !hostLower.contains("force.com")) {
                     LOGGER.warn("Instance URL does not appear to be a Salesforce domain: {}", host);
                 }
 
                 // Check for sandbox consistency
-                validateSandboxConsistency(host, validatedUrl);
+                validateSandboxConsistency(hostLower, validatedUrl);
 
                 return validatedUrl;
-            } catch (MalformedURLException e) {
-                throw new IllegalArgumentException("Invalid Instance URL format: " + instanceUrl, e);
+            } catch (URISyntaxException | MalformedURLException e) {
+                throw new IllegalArgumentException(
+                    "The Instance URL you provided isn't in the correct format. " +
+                    "What to do: Make sure it looks like 'https://yourinstance.salesforce.com' or 'https://yourinstance.my.salesforce.com'. " +
+                    "You provided: " + instanceUrl, e);
             }
         }
         return instanceUrl;
