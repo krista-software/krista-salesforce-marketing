@@ -342,7 +342,7 @@ class CampaignDaoImplTest {
                 () -> campaignDao.deleteCampaign(campaignId)
         );
 
-        assertTrue(exception.getMessage().contains("Campaign deletion is not supported"));
+        assertTrue(exception.getMessage().contains("Campaign deletion is not available"));
     }
 
     @Test

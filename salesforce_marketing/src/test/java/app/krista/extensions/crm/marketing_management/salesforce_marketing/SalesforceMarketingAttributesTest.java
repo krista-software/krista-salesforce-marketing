@@ -106,11 +106,12 @@ class SalesforceMarketingAttributesTest {
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> new SalesforceMarketingAttributes(
-                VALID_CLIENT_ID, VALID_CLIENT_SECRET, malformedUrl, 
+                VALID_CLIENT_ID, VALID_CLIENT_SECRET, malformedUrl,
                 null, null, null, VALID_ROUTING_URL
             )
         );
-        assertTrue(exception.getMessage().startsWith("Invalid Instance URL format:"));
+        assertTrue(exception.getMessage().contains("Instance URL you provided isn't in the correct format"),
+            "Expected error message about invalid Instance URL format, but got: " + exception.getMessage());
     }
 
     @ParameterizedTest
@@ -192,7 +193,8 @@ class SalesforceMarketingAttributesTest {
             IllegalArgumentException.class,
             () -> attributes.update(newAttributes)
         );
-        assertTrue(exception.getMessage().startsWith("Invalid Instance URL format:"));
+        assertTrue(exception.getMessage().contains("Instance URL you provided isn't in the correct format"),
+            "Expected error message about invalid Instance URL format, but got: " + exception.getMessage());
     }
 
     @Test
