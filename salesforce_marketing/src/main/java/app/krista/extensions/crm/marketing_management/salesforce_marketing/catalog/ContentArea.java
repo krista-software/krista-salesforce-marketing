@@ -35,11 +35,11 @@ public class ContentArea {
             description = "Retrieve Custom Fields For Given Object",
             area = "Content",
             type = CatalogRequest.Type.QUERY_SYSTEM)
-    @Field(name = "Field Details", type = "FreeForm", required = false, attributes = {}, options = {})
+    @Field(name = "Field Details", type = "FreeForm", required = false)
     public FreeForm retrieveCustomFieldsForGivenObject(
-            @Field.Text(name = "Object Id", required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectId,
-            @Field.PickOne(name = "Object Type", values = {"Campaign"}, required = true, attributes = {@Attribute(name = "visualWidth", value = "S")}, options = {}) String objectType,
-            @Field.Desc(name = "Custom Fields", type = "[ Text ]", required = true) List<String> customFields) {
+            @Field.Text(name = "Object Id", attributes = {@Attribute(name = "visualWidth", value = "S")}) String objectId,
+            @Field.PickOne(name = "Object Type", values = {"Campaign"}, attributes = {@Attribute(name = "visualWidth", value = "S")}) String objectType,
+            @Field.Desc(name = "Custom Fields", type = "[ Text ]") List<String> customFields) {
         StringBuilder customField = new StringBuilder();
         for (String str : customFields) {
             if (!str.endsWith("__c")) { // custom fields ends with __c
