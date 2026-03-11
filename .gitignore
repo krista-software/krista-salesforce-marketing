@@ -53,3 +53,4 @@ Thumbs.db
 /salesforce_marketing/.gradle/
 /salesforce_marketing/build/
 /salesforce_marketing/gradle/
+salesforce_marketing/gradle.properties
