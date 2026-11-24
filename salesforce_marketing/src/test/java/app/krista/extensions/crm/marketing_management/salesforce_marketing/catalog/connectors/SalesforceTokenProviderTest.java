@@ -32,8 +32,8 @@ import static org.junit.Assert.assertTrue;
  * 3. OAuth 2.0 Password Grant Flow (Username/Password/Security Token provided)
  *
  * Test credentials provided:
- * - Client ID: REDACTED_SALESFORCE_CONSUMER_KEY
- * - Client Secret: REDACTED_SALESFORCE_CONSUMER_SECRET
+ * - Client ID: 3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY
+ * - Client Secret: REDACTED_SECRET
  * - Security Token: h63mvaB1DlqplIMAo057WMKMH
  * - Instance URL: https://ankit-ab-dev-ed.my.salesforce.com
  * - Username: hiren.panchal@kristasoft.com
@@ -42,12 +42,12 @@ import static org.junit.Assert.assertTrue;
 public class SalesforceTokenProviderTest {
 
     // Test credentials from the provided data
-    private static final String CLIENT_ID = "REDACTED_SALESFORCE_CONSUMER_KEY";
-    private static final String CLIENT_SECRET = "REDACTED_SALESFORCE_CONSUMER_SECRET";
-    private static final String SECURITY_TOKEN = "h63mvaB1DlqplIMAo057WMKMH";
+    private static final String CLIENT_ID = "3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY";
+    private static final String CLIENT_SECRET = "REDACTED_SECRET";
+    private static final String SECURITY_TOKEN = "REDACTED_SECRET";
     private static final String INSTANCE_URL = "https://ankit-ab-dev-ed.my.salesforce.com";
     private static final String USERNAME = "hiren.panchal@kristasoft.com";
-    private static final String PASSWORD = "Krista@602";
+    private static final String PASSWORD = "REDACTED_SECRET";
     private static final String ROUTING_URL = "https://test.example.com/callback";
 
     /**

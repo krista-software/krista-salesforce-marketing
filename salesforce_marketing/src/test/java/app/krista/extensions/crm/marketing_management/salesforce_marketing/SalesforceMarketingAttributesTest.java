@@ -35,12 +35,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class SalesforceMarketingAttributesTest {
 
-    private static final String VALID_CLIENT_ID = "REDACTED_SALESFORCE_CONSUMER_KEY";
-    private static final String VALID_CLIENT_SECRET = "REDACTED_SALESFORCE_CONSUMER_SECRET";
+    private static final String VALID_CLIENT_ID = "3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY";
+    private static final String VALID_CLIENT_SECRET = "REDACTED_SECRET";
     private static final String VALID_INSTANCE_URL = "https://mycompany.my.salesforce.com";
     private static final String VALID_USERNAME = "test@example.com";
     private static final String VALID_PASSWORD = "password123";
-    private static final String VALID_SECURITY_TOKEN = "securityToken123";
+    private static final String VALID_SECURITY_TOKEN = "REDACTED_SECRET";
     private static final String VALID_ROUTING_URL = "https://extension.krista.app";
 
     @Test
@@ -228,14 +228,14 @@ class SalesforceMarketingAttributesTest {
         attributes.getOauthService();
 
         Map<String, Object> newAttributes = new HashMap<>();
-        newAttributes.put(SalesforceMarketingAttributes.CLIENT_ID, "REDACTED_SALESFORCE_CONSUMER_KEY_NEW");
-        newAttributes.put(SalesforceMarketingAttributes.CLIENT_SECRET, "REDACTED_SALESFORCE_CONSUMER_SECRET_NEW");
+        newAttributes.put(SalesforceMarketingAttributes.CLIENT_ID, "3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY_NEW");
+        newAttributes.put(SalesforceMarketingAttributes.CLIENT_SECRET, "REDACTED_SECRET");
 
         // When
         attributes.update(newAttributes);
 
         // Then
-        assertEquals("REDACTED_SALESFORCE_CONSUMER_KEY_NEW", attributes.getClientId());
+        assertEquals("3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY_NEW", attributes.getClientId());
         // OAuth service should be recreated with new client ID
         assertNotNull(attributes.getOauthService());
     }

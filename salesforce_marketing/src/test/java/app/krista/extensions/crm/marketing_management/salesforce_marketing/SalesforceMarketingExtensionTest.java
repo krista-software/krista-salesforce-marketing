@@ -51,12 +51,12 @@ import static org.mockito.Mockito.*;
 class SalesforceMarketingExtensionTest {
 
     // Test constants
-    private static final String VALID_CLIENT_ID = "REDACTED_SALESFORCE_CONSUMER_KEY";
-    private static final String VALID_CLIENT_SECRET = "REDACTED_SALESFORCE_CONSUMER_SECRET";
+    private static final String VALID_CLIENT_ID = "3MVG95jctIhbyCprtzHqvP5ePGclhjUompupjYnVlmU84hNMeafFnbvpLnRVq_RM5.cije9EY_1yqmYBDr3KY";
+    private static final String VALID_CLIENT_SECRET = "REDACTED_SECRET";
     private static final String VALID_INSTANCE_URL = "https://mycompany.my.salesforce.com";
     private static final String VALID_USERNAME = "test@example.com";
     private static final String VALID_PASSWORD = "password123";
-    private static final String VALID_SECURITY_TOKEN = "securityToken123";
+    private static final String VALID_SECURITY_TOKEN = "REDACTED_SECRET";
 
     @Mock
     private SalesforceTokenProviderFactory mockProviderFactory;

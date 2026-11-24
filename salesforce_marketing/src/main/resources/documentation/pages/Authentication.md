@@ -111,8 +111,8 @@ code=aPrx...
 **Response Example**:
 ```json
 {
-  "access_token": "REDACTED_SALESFORCE_ACCESS_TOKEN",
-  "refresh_token": "REDACTED_SALESFORCE_REFRESH_TOKEN",
+  "access_token": "REDACTED_SECRET",
+  "refresh_token": "REDACTED_SECRET",
   "signature": "0CcxinCY4uQJEsxOiQJhO82J4A3BQESLtqMelf5chU=",
   "scope": "api web refresh_token",
   "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -152,7 +152,7 @@ Content-Type: application/x-www-form-urlencoded
 grant_type=refresh_token&
 client_id=3MVG9A2kN3Bn17hs...&
 client_secret=1234567890123456789&
-refresh_token=REDACTED_SALESFORCE_REFRESH_TOKEN
+REDACTED_SECRET
 ```
 
 ### Password Grant
